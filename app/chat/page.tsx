@@ -1,23 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { ConversationsProps } from "@ant-design/x";
 
 import ModelSelectButton from "@/components/ModelSelectButton";
 import {
-  EditOutlined,
-  DeleteOutlined,
-  CommentOutlined,
   ArrowDownOutlined,
 } from "@ant-design/icons";
-import { message as antdMessage, Modal, Input, Space, Splitter, FloatButton } from "antd";
+import { message as antdMessage, Splitter, FloatButton } from "antd";
 import {
   getSessionList,
   SessionItem,
   getSessionMessages,
   SessionMessage,
-  deleteSession,
-  updateSessionTitle,
 } from "@/lib/api/conversations";
 import SessionManageModal from "@/components/SessionManageModal";
 import KnowledgeBaseSelectModal from "@/components/KnowledgeBaseSelectModal";
@@ -40,52 +34,6 @@ import { modelEventManager } from "@/lib/events/modelEvents";
 import { useChat } from "@/lib/hooks/useChat";
 
 import styles from "./page.module.css";
-
-// 时间分组函数
-const getTimeGroup = (timestamp: number): string => {
-  const now = new Date();
-
-  // 获取今天0点的时间戳
-  const todayStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  ).getTime();
-  // 获取昨天0点的时间戳
-  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
-  // 获取三天前0点的时间戳
-  const threeDaysAgoStart = todayStart - 3 * 24 * 60 * 60 * 1000;
-  // 获取一周前0点的时间戳
-  const oneWeekAgoStart = todayStart - 7 * 24 * 60 * 60 * 1000;
-  // 获取一个月前0点的时间戳
-  const oneMonthAgoStart = todayStart - 30 * 24 * 60 * 60 * 1000;
-
-  if (timestamp >= todayStart) {
-    return "今天";
-  } else if (timestamp >= yesterdayStart) {
-    return "昨天";
-  } else if (timestamp >= threeDaysAgoStart) {
-    return "三天前";
-  } else if (timestamp >= oneWeekAgoStart) {
-    return "一周前";
-  } else if (timestamp >= oneMonthAgoStart) {
-    return "一个月前";
-  } else {
-    return "更早";
-  }
-};
-
-// 将API数据转换为组件所需格式
-const convertSessionToConversation = (
-  session: SessionItem
-): ConversationItem => {
-  return {
-    key: session.sessionId,
-    label: session.sessionTitle,
-    icon: "💬", // 默认图标
-    group: getTimeGroup(session.updatedAt),
-  };
-};
 
 // 将API消息转换为组件消息格式
 const convertSessionMessageToChatMessage = (
@@ -132,24 +80,11 @@ const convertSessionMessageToChatMessage = (
   return chatMessage;
 };
 
-// 定义会话项类型
-interface ConversationItem {
-  key: string;
-  label: string;
-  icon: string;
-  group: string;
-}
-
 const ChatPage: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(true);
-  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [hasStarted, setHasStarted] = useState(false);
-  const [editingConversation, setEditingConversation] = useState<{
-    key: string;
-    label: string;
-  } | null>(null);
-  const [newConversationName, setNewConversationName] = useState("");
   
   const chatListRef = useRef<ChatMessageListRef>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -198,8 +133,7 @@ const ChatPage: React.FC = () => {
     try {
       setLoading(true);
       const sessions = await getSessionList();
-      const conversationItems = sessions.map(convertSessionToConversation);
-      setConversations(conversationItems);
+      setSessions(sessions);
     } catch (error) {
       console.error("加载会话列表失败:", error);
     } finally {
@@ -324,129 +258,6 @@ const ChatPage: React.FC = () => {
     return unsubscribe;
   }, []);
 
-
-  // 修改会话名称
-  const handleEditConversation = (key: string, currentLabel: string) => {
-    setEditingConversation({ key, label: currentLabel });
-    setNewConversationName(currentLabel);
-  };
-
-  // 确认修改会话名称
-  const confirmEditConversation = async () => {
-    if (editingConversation && newConversationName.trim()) {
-      try {
-        // 调用API更新会话标题
-        await updateSessionTitle(
-          editingConversation.key,
-          newConversationName.trim()
-        );
-
-        // 更新本地状态
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv.key === editingConversation.key
-              ? { ...conv, label: newConversationName.trim() }
-              : conv
-          )
-        );
-
-        antdMessage.success("会话名称已更新");
-        setEditingConversation(null);
-        setNewConversationName("");
-      } catch (error) {
-        console.error("更新会话名称失败:", error);
-        antdMessage.error(
-          "更新会话名称失败: " +
-            (error instanceof Error ? error.message : "未知错误")
-        );
-      }
-    }
-  };
-
-  // 删除会话
-  const handleDeleteConversation = async (key: string) => {
-    // 获取要删除的会话名称
-    const conversationToDelete = conversations.find((conv) => conv.key === key);
-    const conversationName = conversationToDelete?.label || "该会话";
-
-    // 使用Ant Design的Modal.confirm
-    Modal.confirm({
-      title: "删除会话",
-      content: `确定要删除会话 "${conversationName}" 吗？删除后无法恢复。`,
-      okText: "确定删除",
-      cancelText: "取消",
-      okType: "danger",
-      centered: true,
-      maskClosable: true,
-      width: 400,
-      className: styles.confirmModal,
-      onOk: async () => {
-        try {
-          // 调用删除会话API，传递单个sessionId
-          await deleteSession(key);
-
-          // 刷新会话列表
-          await loadSessionList();
-
-          // 如果删除的是当前选中的会话，切换到新建会话状态
-          if (selectedId === key) {
-            // 重置到新建会话状态
-            setSelectedId("");
-            setSessionId(null);
-            setMessages([]);
-            setHasStarted(false);
-          }
-
-          antdMessage.success("会话已删除");
-        } catch (error) {
-          console.error("删除会话失败:", error);
-          antdMessage.error(
-            "删除会话失败: " +
-              (error instanceof Error ? error.message : "未知错误")
-          );
-        }
-      },
-    });
-  };
-
-  // 为Conversations组件创建菜单项
-  const conversationMenu: ConversationsProps["menu"] = (item) => ({
-    items: [
-      {
-        label: "修改名称",
-        key: "edit",
-        icon: <EditOutlined />,
-      },
-      {
-        label: "删除会话",
-        key: "delete",
-        icon: <DeleteOutlined />,
-        danger: true,
-      },
-    ],
-    onClick: (menuInfo) => {
-      menuInfo.domEvent.stopPropagation();
-      if (menuInfo.key === "edit") {
-        handleEditConversation(item.key, String(item.label || ""));
-      } else if (menuInfo.key === "delete") {
-        handleDeleteConversation(item.key);
-      }
-    },
-  });
-
-  // 分组排序和标题自定义
-  const groupable: ConversationsProps["groupable"] = {
-    label: (group: string) =>
-      group ? (
-        <Space>
-          <CommentOutlined />
-          <span>{group}</span>
-        </Space>
-      ) : null,
-    collapsible: true,
-    defaultExpandedKeys: ['今天']
-  };
-
   // 新建对话逻辑：切换到初始聊天状态
   const handleAddConversation = () => {
     handleCancel();
@@ -516,9 +327,8 @@ const ChatPage: React.FC = () => {
       <ChatSidebar
         collapsed={collapsed}
         onCollapsedChange={setCollapsed}
-        conversations={conversations}
+        sessions={sessions}
         selectedId={selectedId}
-        loading={loading}
         onSettingsClick={() => setSessionManageModalVisible(true)}
         onConversationSelect={async (key) => {
           try {
@@ -539,9 +349,16 @@ const ChatPage: React.FC = () => {
             setHasStarted(false);
           }
         }}
-        conversationMenu={conversationMenu}
-        groupable={groupable}
         onAddConversation={handleAddConversation}
+        onSessionsChange={loadSessionList}
+        onSelectedSessionDeleted={() => {
+          handleCancel();
+          // 当前选中的会话被删除时，重置到新建会话状态
+          setSelectedId("");
+          setSessionId(null);
+          setMessages([]);
+          setHasStarted(false);
+        }}
       />
       {/* 右侧聊天区 */}
       <div className={styles.chatArea}>
@@ -631,22 +448,6 @@ const ChatPage: React.FC = () => {
           </div>
         )}
       </div>
-      {/* 编辑会话名称的模态框 */}
-      <Modal
-        title="修改会话名称"
-        open={!!editingConversation}
-        onOk={confirmEditConversation}
-        onCancel={() => setEditingConversation(null)}
-        destroyOnHidden
-        centered
-      >
-        <Input
-          value={newConversationName}
-          onChange={(e) => setNewConversationName(e.target.value)}
-          onPressEnter={confirmEditConversation}
-          placeholder="请输入会话名称"
-        />
-      </Modal>
 
       {/* 会话管理模态框 */}
       <SessionManageModal
