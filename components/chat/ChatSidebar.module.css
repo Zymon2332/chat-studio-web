@@ -4,7 +4,8 @@
   flex-direction: column;
   height: 100%;
   position: relative;
-
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.06), 2px 0 8px rgba(0, 0, 0, 0.04);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebarCollapsed {
@@ -12,103 +13,27 @@
 }
 
 .topActions {
-  padding: 12px;
+  padding: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-bottom: 1px solid var(--ant-color-border-secondary);
-}
-
-.addButton {
-  width: 40px;
-  height: 40px;
-  color: var(--ant-color-text-secondary);
-}
-
-.addButton:hover {
-  background-color: var(--ant-color-fill-quaternary);
-  color: var(--ant-color-text);
 }
 
 .scrollArea {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px;
-}
-
-.scrollAreaCollapsed {
-  padding: 12px 4px;
-}
-
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-  color: var(--ant-color-text-tertiary);
-}
-
-.loadingText {
-  margin-top: 8px;
-  font-size: 12px;
-}
-
-.emptyContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-  color: var(--ant-color-text-tertiary);
-  text-align: center;
-}
-
-.emptyIcon {
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.emptyText {
-  font-size: 12px;
-}
-
-.newChatLabel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.shortcutKey {
-  font-size: 12px;
-  color: var(--ant-color-text-tertiary);
-  background-color: var(--ant-color-fill-quaternary);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
 .bottomToolbar {
-  padding: 12px;
-  border-top: 1px solid var(--ant-color-border-secondary);
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .bottomToolbarCollapsed {
   flex-direction: column;
   gap: 12px;
-}
-
-.toolbarButton {
-  color: var(--ant-color-text-secondary);
-  width: 32px;
-  height: 32px;
-}
-
-.toolbarButton:hover {
-  color: var(--ant-color-text);
-  background-color: var(--ant-color-fill-quaternary);
 }
