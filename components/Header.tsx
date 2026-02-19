@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Avatar, Button, Dropdown, message, theme, Divider, Tag, Flex, Typography } from 'antd';
 import type { MenuProps } from 'antd';
-import { UserOutlined, SettingOutlined, LogoutOutlined, CrownOutlined, AppstoreOutlined, RocketOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
+import { UserOutlined, SettingOutlined, LogoutOutlined, CrownOutlined, AppstoreOutlined, RocketOutlined, UpOutlined, DownOutlined, MessageOutlined, MessageFilled, BookOutlined, BookFilled, ApiOutlined, ApiFilled, ThunderboltOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames';
 import styles from './Header.module.css';
@@ -28,15 +28,16 @@ interface HeaderProps {
 const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSettingsClick, isLogin, onLogout, userInfo }) => {
   const router = useRouter();
   const [collapsed, setCollapsed] = React.useState(false);
+  const { token } = theme.useToken();
 
   const workbenchTabs = [
-    { key: 'chat', icon: '💬', label: '聊天' },
-    { key: 'kb', icon: '📚', label: '知识库' },
-    { key: 'mcp', icon: '🔗', label: 'MCP' },
+    { key: 'kb', iconOutline: <BookOutlined />, iconFilled: <BookFilled />, label: '知识库' },
+    { key: 'chat', iconOutline: <MessageOutlined />, iconFilled: <MessageFilled />, label: '聊天' },
+    { key: 'mcp', iconOutline: <ApiOutlined />, iconFilled: <ApiFilled />, label: 'MCP' },
   ];
 
   const advancedTabs = [
-    { key: 'workflow', icon: '⚡', label: '工作流' },
+    { key: 'workflow', iconOutline: <ThunderboltOutlined />, iconFilled: <ThunderboltFilled />, label: '工作流' },
   ];
 
   const handleNewFeatureClick = (featureName: string) => {
@@ -81,29 +82,51 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
     },
   ];
 
-  const renderTabButton = (tab: { key: string; icon: string; label: string }) => {
-    const isSelected = selectedTab === tab.key;
+  interface TabButtonProps {
+    tab: { key: string; iconOutline: React.ReactNode; iconFilled: React.ReactNode; label: string };
+    isSelected: boolean;
+  }
+
+  const TabButton: React.FC<TabButtonProps> = ({ tab, isSelected }) => {
+    const [isHovered, setIsHovered] = React.useState(false);
+
+    const getButtonStyle = (): React.CSSProperties => {
+      if (isSelected) {
+        return {
+          background: isHovered ? '#f5f5f7' : '#fff',
+          color: token.colorPrimary,
+          fontWeight: 700,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
+        };
+      } else {
+        return {
+          background: isHovered ? token.colorPrimaryBg : 'transparent',
+          color: token.colorPrimary,
+          opacity: isHovered ? 1 : 0.7,
+          fontWeight: 600,
+        };
+      }
+    };
+
     return (
-      <div className={styles.tabButtonWrapper} key={tab.key}>
+      <div className={styles.tabButtonWrapper}>
         <Button
           type="text"
-          icon={<span className={styles.tabIcon}>{tab.icon}</span>}
+          icon={<span className={styles.tabIcon}>{isSelected ? tab.iconFilled : tab.iconOutline}</span>}
           onClick={() => {
             if (tab.key === 'chat') router.push('/chat');
             else if (tab.key === 'kb') router.push('/knowledgebase');
             else if (tab.key === 'mcp') router.push('/mcp');
             else handleNewFeatureClick(tab.label);
           }}
-          className={classNames(styles.tabButton, {
-            [styles.tabButtonSelected]: isSelected,
-            [styles.tabButtonNormal]: !isSelected,
-          })}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={styles.tabButton}
+          style={getButtonStyle()}
+          shape="round"
         >
           {tab.label}
         </Button>
-        {isSelected && (
-          <div className={styles.tabIndicator} />
-        )}
       </div>
     );
   };
@@ -121,14 +144,18 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
           <div className={styles.tabsContainer}>
             {/* 工作台分组 */}
             <Flex align="center" gap={4} className={styles.tabGroup}>
-              {workbenchTabs.map(renderTabButton)}
+              {workbenchTabs.map(tab => (
+                <TabButton key={tab.key} tab={tab} isSelected={selectedTab === tab.key} />
+              ))}
             </Flex>
 
             <Divider orientation="vertical" />
 
             {/* 高级功能分组 */}
             <Flex align="center" gap={4}>
-              {advancedTabs.map(renderTabButton)}
+              {advancedTabs.map(tab => (
+                <TabButton key={tab.key} tab={tab} isSelected={selectedTab === tab.key} />
+              ))}
             </Flex>
           </div>
         </div>
