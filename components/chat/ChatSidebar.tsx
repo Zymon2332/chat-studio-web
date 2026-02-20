@@ -294,7 +294,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         })}
       >
         {(() => {
-          if (collapsed || items.length === 0) {
+          if (collapsed) {
             return null;
           }
 
