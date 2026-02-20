@@ -3,6 +3,7 @@ import "../styles/globals.css";
 import React from "react";
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { AntdXProvider } from "../components/AntdXProvider";
+import { UserProvider } from "@/contexts/UserContext";
 import AppMain from "../components/AppMain";
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({
       <body>
         <AntdRegistry>
           <AntdXProvider>
-            <AppMain>{children}</AppMain>
+            <UserProvider>
+              <AppMain>{children}</AppMain>
+            </UserProvider>
           </AntdXProvider>
         </AntdRegistry>
       </body>

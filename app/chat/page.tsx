@@ -334,7 +334,7 @@ const ChatPage: React.FC = () => {
           try {
             handleCancel();
             setSelectedId(key);
-            setSessionId(key); // 切换会话时设置sessionId为选中的会话ID
+            setSessionId(key); // 切换会话时设置 sessionId 为选中的会话 ID
             setHasStarted(true);
             setPreviewVisible(false); // 关闭预览面板
             setShowScrollToBottom(false);

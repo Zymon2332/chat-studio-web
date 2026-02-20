@@ -4,17 +4,18 @@ import classNames from "classnames";
 import styles from "./ChatSidebar.module.css";
 
 import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
+  LayoutOutlined,
   PlusOutlined,
   PlusCircleFilled,
   SettingOutlined,
   SettingFilled,
   EditOutlined,
   DeleteOutlined,
+  CodeOutlined,
 } from "@ant-design/icons";
 import { Conversations, ConversationsProps } from "@ant-design/x";
 import { SessionItem, deleteSession, updateSessionTitle } from "@/lib/api/conversations";
+import { useUser } from "@/contexts/UserContext";
 
 // 时间分组函数
 const getTimeGroup = (timestamp: number): string => {
@@ -82,6 +83,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onSelectedSessionDeleted,
 }) => {
   const { token } = theme.useToken();
+  const { userInfo } = useUser();
   
   // 编辑状态管理
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -113,9 +115,24 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     setEditingValue(currentLabel);
   }, []);
 
-  // 转换会话数据，支持内联编辑
-  const items = useMemo(() => {
-    return sessions.map((session) => {
+  // 自动聚焦输入框
+  useEffect(() => {
+    if (editingKey && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 50);
+    }
+  }, [editingKey]);
+
+  // 编程功能点击处理
+  const handleProgrammingClick = useCallback(() => {
+    antdMessage.info("正在开发中");
+  }, []);
+
+  // 构建 Conversations 的 items，包含固定功能项
+  const conversationsItems = useMemo(() => {
+    const sessionItems = sessions.map((session) => {
       const isEditing = editingKey === session.sessionId;
       return {
         key: session.sessionId,
@@ -141,17 +158,22 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         group: getTimeGroup(session.updatedAt),
       };
     });
-  }, [sessions, editingKey, editingValue, token.colorPrimary, handleSaveEdit]);
 
-  // 自动聚焦输入框
-  useEffect(() => {
-    if (editingKey && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 50);
-    }
-  }, [editingKey]);
+    // 固定功能项放在最前面
+    return [
+      {
+        key: 'session-management',
+        label: '会话管理',
+        icon: <SettingOutlined />,
+      },
+      {
+        key: 'programming',
+        label: '编程',
+        icon: <CodeOutlined />,
+      },
+      ...sessionItems,
+    ];
+  }, [sessions, editingKey, editingValue, token.colorPrimary, handleSaveEdit]);
 
   // 删除会话
   const handleDeleteConversation = useCallback((key: string) => {
@@ -186,29 +208,36 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   }, [selectedId, onSessionsChange, onSelectedSessionDeleted]);
 
   // 为Conversations组件创建菜单项
-  const conversationMenu: ConversationsProps["menu"] = useCallback((item: any) => ({
-    items: [
-      {
-        label: "修改名称",
-        key: "edit",
-        icon: <EditOutlined />,
+  const conversationMenu: ConversationsProps["menu"] = useCallback((item: any) => {
+    // 固定功能项不显示右键菜单
+    if (item.key === 'session-management' || item.key === 'programming') {
+      return undefined;
+    }
+    
+    return {
+      items: [
+        {
+          label: "修改名称",
+          key: "edit",
+          icon: <EditOutlined />,
+        },
+        {
+          label: "删除会话",
+          key: "delete",
+          icon: <DeleteOutlined />,
+          danger: true,
+        },
+      ],
+      onClick: (menuInfo: any) => {
+        menuInfo.domEvent.stopPropagation();
+        if (menuInfo.key === "edit") {
+          handleStartEdit(item.key, String(item.label || ""));
+        } else if (menuInfo.key === "delete") {
+          handleDeleteConversation(item.key);
+        }
       },
-      {
-        label: "删除会话",
-        key: "delete",
-        icon: <DeleteOutlined />,
-        danger: true,
-      },
-    ],
-    onClick: (menuInfo: any) => {
-      menuInfo.domEvent.stopPropagation();
-      if (menuInfo.key === "edit") {
-        handleStartEdit(item.key, String(item.label || ""));
-      } else if (menuInfo.key === "delete") {
-        handleDeleteConversation(item.key);
-      }
-    },
-  }), [handleStartEdit, handleDeleteConversation]);
+    };
+  }, [handleStartEdit, handleDeleteConversation]);
 
   // 分组排序和标题自定义
   const groupable: ConversationsProps["groupable"] = {
@@ -275,34 +304,45 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         [styles.sidebarCollapsed]: collapsed,
       })}
     >
-      {/* 顶部操作区 (仅在折叠时显示新建按钮) */}
-      {collapsed && (
-        <div className={styles.topActions}>
-          <ToolbarButton
-            iconOutline={<PlusOutlined />}
-            iconFilled={<PlusCircleFilled />}
-            onClick={onAddConversation}
-            isActive={false}
-          />
-        </div>
-      )}
+      {/* 展开状态 */}
+      {!collapsed && (
+        <>
+          {/* 顶部用户信息栏 */}
+          <div className={styles.userBar}>
+            <div className={styles.userInfo}>
+              {userInfo?.profileAvatarUrl ? (
+                <img src={userInfo.profileAvatarUrl} alt="avatar" className={styles.avatar} />
+              ) : (
+                <div className={styles.avatarPlaceholder} />
+              )}
+              <span className={styles.userName}>{userInfo?.nickName}</span>
+            </div>
+            <Button
+              type="text"
+              icon={<LayoutOutlined />}
+              onClick={() => onCollapsedChange(!collapsed)}
+              className={styles.collapseBtn}
+            />
+          </div>
 
-      {/* 中间滚动区 */}
-      <div
-        className={classNames(styles.scrollArea, {
-          [styles.scrollAreaCollapsed]: collapsed,
-        })}
-      >
-        {(() => {
-          if (collapsed) {
-            return null;
-          }
-
-          return (
+          {/* 中间滚动区 */}
+          <div
+            className={classNames(styles.scrollArea, {
+              [styles.scrollAreaCollapsed]: collapsed,
+            })}
+          >
             <Conversations
-              items={items}
+              items={conversationsItems}
               activeKey={selectedId}
-              onActiveChange={onConversationSelect}
+              onActiveChange={(key) => {
+                if (key === 'session-management') {
+                  onSettingsClick();
+                } else if (key === 'programming') {
+                  handleProgrammingClick();
+                } else {
+                  onConversationSelect(key);
+                }
+              }}
               menu={conversationMenu}
               groupable={groupable}
               creation={{
@@ -311,32 +351,53 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 onClick: onAddConversation,
               }}
             />
-          );
-        })()}
-      </div>
+          </div>
 
-      {/* 底部工具栏 */}
-      <div
-        className={classNames(styles.bottomToolbar, {
-          [styles.bottomToolbarCollapsed]: collapsed,
-        })}
-      >
-        <ToolbarButton
-          iconOutline={<SettingOutlined />}
-          iconFilled={<SettingFilled />}
-          onClick={onSettingsClick}
-          isActive={false}
-        />
+          {/* 底部 Chat Studio 标题 */}
+          <div className={styles.brandTitle}>
+            Chat Studio
+          </div>
+        </>
+      )}
 
-        <ToolbarButton
-          iconOutline={
-            collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
-          }
-          iconFilled={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={() => onCollapsedChange(!collapsed)}
-          isActive={false}
-        />
-      </div>
+      {/* 折叠状态 */}
+      {collapsed && (
+        <div className={styles.collapsedContent}>
+          {/* 展开按钮 */}
+          <div
+            className={styles.expandButton}
+            onClick={() => onCollapsedChange(false)}
+            title="展开侧边栏"
+          >
+            <LayoutOutlined />
+          </div>
+
+          {/* 功能按钮区 */}
+          <div className={styles.collapsedButtons}>
+            <div
+              className={styles.collapsedButton}
+              onClick={onAddConversation}
+              title="新建对话"
+            >
+              <PlusOutlined />
+            </div>
+            <div
+              className={styles.collapsedButton}
+              onClick={onSettingsClick}
+              title="会话管理"
+            >
+              <SettingOutlined />
+            </div>
+            <div
+              className={styles.collapsedButton}
+              onClick={handleProgrammingClick}
+              title="编程"
+            >
+              <CodeOutlined />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

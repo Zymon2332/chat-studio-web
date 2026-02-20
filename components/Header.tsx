@@ -136,10 +136,10 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
       className={classNames(styles.header, { [styles.headerCollapsed]: collapsed })}
     >
       <div className={classNames(styles.innerContainer, { [styles.innerContainerCollapsed]: collapsed })}>
-        <div className={styles.logo}>
-          Chat Studio
-        </div>
+        {/* 左侧占位 */}
+        <div className={styles.leftPlaceholder}></div>
 
+        {/* 中间 Tab */}
         <div className={styles.tabsWrapper}>
           <div className={styles.tabsContainer}>
             {/* 工作台分组 */}
