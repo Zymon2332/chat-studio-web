@@ -18,8 +18,6 @@ export const AntdXProvider = ({ children }: { children: React.ReactNode }) => {
       theme={{
         cssVar: { key: 'ant' },
         token: {
-          colorPrimary: "#3F51B5",
-          colorTextBase: "#333333",
           borderRadius: 6,
         },
         algorithm: antTheme.defaultAlgorithm,

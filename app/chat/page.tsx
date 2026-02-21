@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
-import ModelSelectButton from "@/components/ModelSelectButton";
 import {
   ArrowDownOutlined,
 } from "@ant-design/icons";
@@ -14,13 +13,12 @@ import {
   SessionMessage,
 } from "@/lib/api/conversations";
 import SessionManageModal from "@/components/SessionManageModal";
-import KnowledgeBaseSelectModal from "@/components/KnowledgeBaseSelectModal";
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatMessageInput from "@/components/chat/ChatMessageInput";
 import ChatMessageList, { ChatMessage, ChatMessageListRef } from "@/components/chat/ChatMessageList";
-import AnimatedTitle from "@/components/chat/AnimatedTitle";
+import ChatWelcome from "@/components/chat/ChatWelcome";
 import PreviewPanel from "@/components/chat/PreviewPanel";
-import { KnowledgeBase } from "@/lib/api/knowledgebase";
+import { useUser } from "@/contexts/UserContext";
 import {
   getDefaultModel,
   DefaultModel,
@@ -81,10 +79,10 @@ const convertSessionMessageToChatMessage = (
 };
 
 const ChatPage: React.FC = () => {
+  const { userInfo } = useUser();
   const [collapsed, setCollapsed] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
-  const [hasStarted, setHasStarted] = useState(false);
   
   const chatListRef = useRef<ChatMessageListRef>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -92,15 +90,10 @@ const ChatPage: React.FC = () => {
   // 用于控制Sender输入框的值
   const [inputValue, setInputValue] = useState(""); 
   
-  // 检索模式
-  const [searchMode, setSearchMode] = useState<null | "web"| 'think' | "kb">(null);
   const [loading, setLoading] = useState<boolean>(true);
   
   const [sessionManageModalVisible, setSessionManageModalVisible] =
     useState<boolean>(false);
-  const [kbSelectModalVisible, setKbSelectModalVisible] =
-    useState<boolean>(false);
-  const [selectedKb, setSelectedKb] = useState<KnowledgeBase | null>(null);
   const [selectedModel, setSelectedModel] = useState<ModelListItem | null>(
     null
   );
@@ -209,26 +202,6 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  // 设置默认模型
-  const handleSetDefaultModel = async () => {
-    if (!selectedModel) {
-      antdMessage.warning("请先选择一个模型");
-      return;
-    }
-
-    try {
-      await setDefaultModelAPI(selectedModel.id);
-      antdMessage.success("设置默认模型成功");
-      // 重新加载默认模型信息
-      await loadDefaultModel();
-      // 触发模型变更事件，通知其他组件刷新
-      modelEventManager.triggerModelChange();
-    } catch (error) {
-      console.error("设置默认模型失败:", error);
-      antdMessage.error("设置默认模型失败");
-    }
-  };
-
   // 组件挂载时加载会话列表和默认模型
   useEffect(() => {
     loadSessionList();
@@ -243,7 +216,6 @@ const ChatPage: React.FC = () => {
       loadDefaultModel();
     });
 
-    // 组件卸载时取消订阅
     return unsubscribe;
   }, []);
 
@@ -254,32 +226,18 @@ const ChatPage: React.FC = () => {
       loadModelList();
     });
 
-    // 组件卸载时取消订阅
     return unsubscribe;
   }, []);
 
   // 新建对话逻辑：切换到初始聊天状态
   const handleAddConversation = () => {
     handleCancel();
-    // 清除当前选中的会话
     setSelectedId("");
-    // 切换到初始状态（Sender在中间）
-    setHasStarted(false);
-    // 清除会话ID和消息
     setSessionId(null);
     setMessages([]);
-    // 重置Sender状态
-    setInputValue(""); // 清空输入框内容
-    setSearchMode(null); // 重置检索模式
-    setSelectedKb(null); // 清除选中的知识库
-    setPreviewVisible(false); // 关闭预览面板
+    setInputValue("");
+    setPreviewVisible(false);
     setShowScrollToBottom(false);
-  };
-
-  // 处理知识库选择
-  const handleKbSelect = (kb: KnowledgeBase) => {
-    setSelectedKb(kb);
-    setSearchMode("kb");
   };
 
   // 滚动监听
@@ -312,13 +270,9 @@ const ChatPage: React.FC = () => {
     chatListRef.current?.scrollToBottom();
   };
 
-  // 发送消息的包装函数
   const onSendMessage = (val: string, uploadId?: string, contentType?: string, fileUrl?: string) => {
-    if (!hasStarted) {
-        setHasStarted(true);
-    }
-    handleSubmit(val, selectedModel || defaultModel, searchMode, selectedKb, uploadId, contentType, fileUrl);
-    setInputValue(""); // 提交后清空输入框
+    handleSubmit(val, selectedModel || defaultModel, null, null, uploadId, contentType, fileUrl);
+    setInputValue("");
   };
 
   return (
@@ -334,90 +288,51 @@ const ChatPage: React.FC = () => {
           try {
             handleCancel();
             setSelectedId(key);
-            setSessionId(key); // 切换会话时设置 sessionId 为选中的会话 ID
-            setHasStarted(true);
-            setPreviewVisible(false); // 关闭预览面板
+            setSessionId(key);
+            setPreviewVisible(false);
             setShowScrollToBottom(false);
-
-            // 加载该会话的历史消息
             await loadSessionMessages(key);
-
           } catch (error) {
             console.error("切换会话失败:", error);
             antdMessage.error("切换会话失败，请重试");
-            setMessages([]); // 出错时清空消息
-            setHasStarted(false);
+            setMessages([]);
           }
         }}
         onAddConversation={handleAddConversation}
         onSessionsChange={loadSessionList}
         onSelectedSessionDeleted={() => {
           handleCancel();
-          // 当前选中的会话被删除时，重置到新建会话状态
           setSelectedId("");
           setSessionId(null);
           setMessages([]);
-          setHasStarted(false);
         }}
       />
       {/* 右侧聊天区 */}
       <div className={styles.chatArea}>
-        <div className={styles.modelSelectContainer}>
-          <ModelSelectButton
-              selectedModel={selectedModel}
-              defaultModel={defaultModel}
-              onSetDefaultClick={() => {
-                handleSetDefaultModel();
-              }}
-              showSetDefault={true}
-              modelList={modelList}
-              onModelSelect={setSelectedModel}
-              onDropdownOpen={loadModelList}
-            />
-        </div>
-        {!hasStarted ? (
-          <div className={styles.centerContainer}>
-            <AnimatedTitle
-              className={styles.title}
-            />
-            <div className={styles.middleSenderContainer}>
-              <ChatMessageInput
-                value={inputValue}
-                onChange={setInputValue}
-                onSubmit={onSendMessage}
-                loading={sendingLoading}
-                onCancel={handleCancel}
-                searchMode={searchMode}
-                selectedKb={selectedKb}
-                onSearchModeChange={setSearchMode}
-                onKbSelectModalOpen={() => setKbSelectModalVisible(true)}
-                selectedModelAbilities={selectedModel?.abilities || defaultModel?.abilities}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className={styles.chatContent}>
-            <Splitter className={styles.splitter} onResize={setPanelSizes}>
+        <div className={styles.chatContent}>
+          <Splitter className={styles.splitter} onResize={setPanelSizes}>
               <Splitter.Panel size={panelSizes[0]} min="40%">
                 <div className={styles.splitterPanel}>
-                  {/* BubbleList 区域 */}
-                  <div className={styles.messageListContainer}>
-                    <ChatMessageList
-                      ref={chatListRef}
-                      messages={displayMessages}
-                      isViewingHistory={!!selectedId} // 如果有选中的会话ID，说明在查看历史消息
-                      onPreview={handlePreview}
-                      onScroll={handleScroll}
-                    />
-                    {showScrollToBottom && (
-                      <FloatButton
-                        icon={<ArrowDownOutlined />}
-                        onClick={scrollToBottom}
-                        style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 24 }}
+                  {displayMessages.length === 0 ? (
+                    <ChatWelcome userName={userInfo?.nickName} />
+                  ) : (
+                    <div className={styles.messageListContainer}>
+                      <ChatMessageList
+                        ref={chatListRef}
+                        messages={displayMessages}
+                        isViewingHistory={!!selectedId}
+                        onPreview={handlePreview}
+                        onScroll={handleScroll}
                       />
-                    )}
-                  </div>
-                  {/* Sender 组件 - Flex布局在底部 */}
+                      {showScrollToBottom && (
+                        <FloatButton
+                          icon={<ArrowDownOutlined />}
+                          onClick={scrollToBottom}
+                          style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 24 }}
+                        />
+                      )}
+                    </div>
+                  )}
                   <div className={styles.bottomSenderWrapper}>
                     <div className={styles.bottomSenderContainer}>
                       <ChatMessageInput
@@ -426,11 +341,10 @@ const ChatPage: React.FC = () => {
                         onSubmit={onSendMessage}
                         loading={sendingLoading}
                         onCancel={handleCancel}
-                        searchMode={searchMode}
-                        selectedKb={selectedKb}
-                        onSearchModeChange={setSearchMode}
-                        onKbSelectModalOpen={() => setKbSelectModalVisible(true)}
-                        selectedModelAbilities={selectedModel?.abilities || defaultModel?.abilities}
+                        selectedModel={selectedModel}
+                        defaultModel={defaultModel}
+                        modelList={modelList}
+                        onModelSelect={setSelectedModel}
                       />
                     </div>
                   </div>
@@ -446,8 +360,7 @@ const ChatPage: React.FC = () => {
               )}
             </Splitter>
           </div>
-        )}
-      </div>
+       </div>
 
       {/* 会话管理模态框 */}
       <SessionManageModal
@@ -457,21 +370,12 @@ const ChatPage: React.FC = () => {
         selectedSessionId={selectedId}
         onSelectedSessionDeleted={() => {
           handleCancel();
-          // 当前选中的会话被删除时，重置到新建会话状态
           setSelectedId("");
           setSessionId(null);
           setMessages([]);
-          setHasStarted(false);
-          setPreviewVisible(false); // 关闭预览面板
+          setPreviewVisible(false);
           setShowScrollToBottom(false);
         }}
-      />
-
-      {/* 知识库选择模态框 */}
-      <KnowledgeBaseSelectModal
-        open={kbSelectModalVisible}
-        onCancel={() => setKbSelectModalVisible(false)}
-        onSelect={handleKbSelect}
       />
     </div>
   );

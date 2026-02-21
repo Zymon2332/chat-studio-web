@@ -1,0 +1,496 @@
+.container {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 20px;
+  overflow: auto;
+  width: 100%;
+  background: #f8f9fc;
+}
+
+.content {
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* 头部欢迎区 */
+.header {
+  margin-bottom: 24px;
+}
+
+.welcomeTitle {
+  font-size: 32px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.waveEmoji {
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.welcomeSubtitle {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.45);
+  margin: 0;
+}
+
+/* 卡片通用样式 */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* 上部区域 */
+.topSection {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* 智能助手建议卡片 */
+.suggestionCard {
+  position: relative;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(248, 250, 255, 0.8) 0%, rgba(240, 244, 255, 0.6) 100%);
+}
+
+.suggestionContent {
+  z-index: 1;
+}
+
+.suggestionTag {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.suggestionMainTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.suggestionDesc {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.45);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.suggestionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.primaryButton {
+  padding: 10px 24px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  background: #2563eb;
+}
+
+.secondaryButton {
+  padding: 10px 24px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.suggestionIconBg {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3b82f6;
+}
+
+/* 会议摘要卡片 */
+.meetingCard {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.videoThumbnail {
+  position: relative;
+  height: 160px;
+  background: linear-gradient(135deg, #e8ecf1 0%, #dfe3e8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.playButton {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.playButton:hover {
+  transform: scale(1.05);
+}
+
+.duration {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.meetingInfo {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.meetingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.meetingType {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.meetingTime {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.meetingTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin: 0 0 8px;
+}
+
+.meetingDesc {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+  margin: 0 0 16px;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.viewMoreButton {
+  width: 100%;
+  padding: 10px;
+  background: #f8f9fc;
+  color: rgba(0, 0, 0, 0.65);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewMoreButton:hover {
+  background: #eff1f5;
+}
+
+/* 下部区域 */
+.bottomSection {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+}
+
+/* 最近查看卡片 */
+.recentCard {
+  min-height: 200px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardIcon {
+  font-size: 18px;
+  color: #3b82f6;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.viewAllButton {
+  padding: 6px 12px;
+  background: transparent;
+  color: #3b82f6;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.viewAllButton:hover {
+  opacity: 0.8;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.fileItem:hover {
+  background: #f8f9fc;
+}
+
+.fileIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileName {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 2px;
+}
+
+.fileSubtitle {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* 任务卡片 */
+.taskCard {
+  min-height: 200px;
+}
+
+.taskFilter {
+  display: flex;
+  gap: 4px;
+  background: #f0f2f5;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.filterActive {
+  padding: 6px 14px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.65);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.filterInactive {
+  padding: 6px 14px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.35);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+}
+
+.taskTableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 60px;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.taskHeaderCell {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.35);
+  font-weight: 400;
+}
+
+.taskItem {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 60px;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  align-items: center;
+}
+
+.taskItem:last-child {
+  border-bottom: none;
+}
+
+.taskName {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.taskStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.taskStatus.urgent {
+  background: #ffe8e8;
+  color: #ff4d4f;
+}
+
+.taskStatus.inprogress {
+  background: #e6f4ff;
+  color: #1890ff;
+}
+
+.taskStatus.pending {
+  background: #f5f5f5;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.taskDueDate {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.taskAssignee {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.assigneeAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffd591 0%, #ffc069 100%);
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .topSection {
+    grid-template-columns: 1fr;
+  }
+  
+  .meetingCard {
+    max-width: 380px;
+  }
+  
+  .bottomSection {
+    grid-template-columns: 1fr;
+  }
+  
+  .recentCard {
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 600px) {
+  .welcomeTitle {
+    font-size: 24px;
+  }
+  
+  .suggestionMainTitle {
+    font-size: 18px;
+  }
+  
+  .taskTableHeader {
+    display: none;
+  }
+  
+  .taskItem {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

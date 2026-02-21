@@ -1,17 +1,26 @@
-import { Button, Divider, Flex, Dropdown, MenuProps } from "antd";
+import { Dropdown, MenuProps, Input } from "antd";
 import React, { useRef } from "react";
 
-import { KnowledgeBase } from "@/lib/api/knowledgebase";
 import {
   PlusOutlined,
   FileImageOutlined,
   FilePdfOutlined,
   VideoCameraOutlined,
   AudioOutlined,
-  SearchOutlined,
+  SendOutlined,
+  LoadingOutlined,
+  RobotOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { Sender, Attachments, AttachmentsProps } from "@ant-design/x";
 import { uploadFile } from "@/lib/api/upload";
+
+import styles from "./ChatMessageInput.module.css";
+
+import type {
+  ModelListItem,
+  DefaultModel,
+} from "@/lib/api/models";
 
 interface ChatMessageInputProps {
   value: string;
@@ -22,60 +31,42 @@ interface ChatMessageInputProps {
     contentType?: string,
     fileUrl?: string
   ) => void;
-  searchMode: "web" | "think" | "kb" | null;
-  selectedKb: KnowledgeBase | null;
-  onSearchModeChange: (mode: "web" | "think" | "kb" | null) => void;
-  onKbSelectModalOpen: () => void;
   disabled?: boolean;
   loading?: boolean;
   onCancel?: () => void;
-  selectedModelAbilities?: string;
+  selectedModel?: ModelListItem | null;
+  defaultModel?: DefaultModel | null;
+  modelList?: any[];
+  onModelSelect?: (model: ModelListItem) => void;
 }
 
 const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   value,
   onChange,
   onSubmit,
-  searchMode,
-  selectedKb,
-  onSearchModeChange,
-  onKbSelectModalOpen,
   disabled = false,
   loading = false,
   onCancel,
-  selectedModelAbilities,
+  selectedModel,
+  defaultModel,
+  modelList,
+  onModelSelect,
 }) => {
-  // 上传相关状态
   const [uploadId, setUploadId] = React.useState<string | undefined>(undefined);
-  const [contentType, setContentType] = React.useState<string | undefined>(
-    undefined
-  );
+  const [contentType, setContentType] = React.useState<string | undefined>(undefined);
   const [fileName, setFileName] = React.useState<string | undefined>(undefined);
   const [uploading, setUploading] = React.useState(false);
 
-  // Attachments items
   const [attachmentItems, setAttachmentItems] = React.useState<
     NonNullable<AttachmentsProps["items"]>
   >([]);
   const [open, setOpen] = React.useState(false);
 
-  // Attachments ref
+  const [searchValue, setSearchValue] = React.useState("");
+  const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false);
+
   const attachmentsRef = useRef<any>(null);
 
-  // 检查是否支持深度思考
-  const isThinkingSupported = React.useMemo(() => {
-    if (!selectedModelAbilities) return false;
-    return selectedModelAbilities.includes("THINKING");
-  }, [selectedModelAbilities]);
-
-  // 如果当前是深度思考模式但模型不支持，自动取消深度思考模式
-  React.useEffect(() => {
-    if (searchMode === "think" && !isThinkingSupported) {
-      onSearchModeChange(null);
-    }
-  }, [isThinkingSupported, searchMode, onSearchModeChange]);
-
-  // Handle file list change
   React.useEffect(() => {
     if (attachmentItems.length > 0) {
       setOpen(true);
@@ -84,26 +75,22 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     }
   }, [attachmentItems.length]);
 
-  // 处理文件上传
   const handleFileUpload = async (file: File, type: string) => {
     if (uploading) return;
 
-    // Create a temporary item for display
     const tempUid = Date.now().toString();
     const newItem: NonNullable<AttachmentsProps["items"]>[number] = {
       uid: tempUid,
       name: file.name,
       status: "uploading",
-      url: URL.createObjectURL(file), // Create preview URL
+      url: URL.createObjectURL(file),
       originFileObj: file as any,
       percent: 0,
     };
 
-    // Replace existing items since we only support one file
     setAttachmentItems([newItem]);
     setUploading(true);
 
-    // Simulate progress
     const timer = setInterval(() => {
       setAttachmentItems((prev) => {
         const item = prev.find((i) => i.uid === tempUid);
@@ -126,25 +113,20 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
       setContentType(type);
       setFileName(file.name);
 
-      // Update item status to done
       setAttachmentItems((prev) =>
         prev.map((item) =>
-          item.uid === tempUid
-            ? { ...item, status: "done", percent: 100 }
-            : item
+          item.uid === tempUid ? { ...item, status: "done", percent: 100 } : item
         )
       );
     } catch (error) {
       console.error(error);
       clearInterval(timer);
 
-      // Update item status to error
       setAttachmentItems((prev) =>
         prev.map((item) =>
           item.uid === tempUid ? { ...item, status: "error" } : item
         )
       );
-      // Clear upload state after a delay or immediately? Let's keep the error item visible
       setUploadId(undefined);
       setContentType(undefined);
       setFileName(undefined);
@@ -153,12 +135,10 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     }
   };
 
-  // 触发文件选择
   const triggerFileSelect = (accept: string, type: string) => {
     if (attachmentsRef.current) {
       attachmentsRef.current.select({ accept });
     } else {
-      // Fallback if ref is not working as expected
       const input = document.createElement("input");
       input.type = "file";
       input.accept = accept;
@@ -170,7 +150,6 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     }
   };
 
-  // 清除上传
   const clearUpload = () => {
     setUploadId(undefined);
     setContentType(undefined);
@@ -178,12 +157,11 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     setAttachmentItems([]);
   };
 
-  // 下拉菜单项
-  const items: MenuProps["items"] = [
+  const uploadItems: MenuProps["items"] = [
     {
       key: "image",
-      label: "上传图片",
-      icon: <FileImageOutlined />,
+      label: "图片",
+      icon: <FileImageOutlined style={{ fontSize: 16 }} />,
       onClick: () => {
         (window as any)._currentUploadType = "IMAGE";
         triggerFileSelect("image/*", "IMAGE");
@@ -191,8 +169,8 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     },
     {
       key: "pdf",
-      label: "上传文档",
-      icon: <FilePdfOutlined />,
+      label: "文档",
+      icon: <FilePdfOutlined style={{ fontSize: 16 }} />,
       onClick: () => {
         (window as any)._currentUploadType = "PDF";
         triggerFileSelect(".pdf", "PDF");
@@ -200,8 +178,8 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     },
     {
       key: "video",
-      label: "上传视频",
-      icon: <VideoCameraOutlined />,
+      label: "视频",
+      icon: <VideoCameraOutlined style={{ fontSize: 16 }} />,
       onClick: () => {
         (window as any)._currentUploadType = "VIDEO";
         triggerFileSelect("video/*", "VIDEO");
@@ -209,8 +187,8 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     },
     {
       key: "audio",
-      label: "上传音频",
-      icon: <AudioOutlined />,
+      label: "音频",
+      icon: <AudioOutlined style={{ fontSize: 16 }} />,
       onClick: () => {
         (window as any)._currentUploadType = "AUDIO";
         triggerFileSelect("audio/*", "AUDIO");
@@ -241,128 +219,204 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     </Sender.Header>
   );
 
+  const handleSend = () => {
+    if (loading || uploading || disabled) return;
+    if (!value.trim() && !uploadId) return;
+
+    const fileUrl = attachmentItems.length > 0 ? attachmentItems[0].url : undefined;
+    onSubmit(value, uploadId, contentType, fileUrl);
+    clearUpload();
+  };
+
+  const canSend = !disabled && !uploading && (value.trim() || uploadId);
+
+  const displayModelName = selectedModel
+    ? selectedModel.modelName
+    : defaultModel
+    ? defaultModel.modelName
+    : "选择模型";
+
+  const displayIcon = selectedModel?.icon || defaultModel?.icon;
+
+  const filteredModelList = React.useMemo(() => {
+    if (!modelList) return [];
+    if (!searchValue) return modelList;
+
+    const lowerSearch = searchValue.toLowerCase();
+
+    return modelList
+      .map((provider) => {
+        const providerMatches = provider.providerName
+          .toLowerCase()
+          .includes(lowerSearch);
+
+        const filteredModels = provider.models.filter((model: any) =>
+          model.modelName.toLowerCase().includes(lowerSearch)
+        );
+
+        if (providerMatches) {
+          return provider;
+        }
+
+        if (filteredModels.length > 0) {
+          return {
+            ...provider,
+            models: filteredModels,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  }, [modelList, searchValue]);
+
+  const menuItems: MenuProps["items"] = React.useMemo(() => {
+    if (!filteredModelList || filteredModelList.length === 0) {
+      return [
+        {
+          key: "empty",
+          label: <span>{searchValue ? "未找到相关模型" : "暂无可用模型"}</span>,
+          disabled: true,
+        },
+      ];
+    }
+
+    return filteredModelList.map((provider: any) => ({
+      key: provider.providerId,
+      type: "group",
+      label: provider.providerName,
+      children: provider.models.map((model: any) => {
+        const iconUrl = model.icon || provider.icon;
+        return {
+          key: String(model.id),
+          label: <span>{model.modelName}</span>,
+          icon: iconUrl ? (
+            <img
+              src={iconUrl}
+              alt={model.modelName}
+              className={styles.menuItemIcon}
+              style={{ width: 20, height: 20, borderRadius: 4 }}
+            />
+          ) : (
+            <RobotOutlined />
+          ),
+          onClick: () =>
+            onModelSelect &&
+            onModelSelect({
+              ...model,
+              icon: iconUrl,
+              providerId: provider.providerId,
+            }),
+        };
+      }),
+    }));
+  }, [filteredModelList, onModelSelect, searchValue]);
+
   return (
-    <Sender
-      header={fileName || uploading ? senderHeader : undefined}
-      value={value}
-      onChange={onChange}
-      placeholder={"你好，可以问我任意问题～"}
-      allowSpeech={true}
-      disabled={disabled}
-      autoSize={{ minRows: 2, maxRows: 8 }}
-      styles={{
-        root: {
-          borderRadius: 30,
-          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1), 0 2px 2px rgba(0, 0, 0, 0.1)'
-        },
-        input: {
-          fontSize: 15,
-          padding: 10
-        },
-      }}
-      suffix={false}
-      onSubmit={(val) => {
-        if (loading || uploading) {
-          return;
-        }
-        if (!val.trim() && !uploadId) {
-          return;
-        }
+    <div className={styles.wrapper}>
+      <Sender
+        header={fileName || uploading ? senderHeader : undefined}
+        value={value}
+        onChange={onChange}
+        placeholder="输入消息..."
+        allowSpeech={true}
+        disabled={disabled}
+        autoSize={{ minRows: 1, maxRows: 3 }}
+        styles={{
+          root: {
+            borderRadius: 20,
+            boxShadow: 'none',
+            border: 'none',
+            background: 'transparent',
+          },
+          input: {
+            fontSize: 14,
+            lineHeight: 1.5,
+            padding: '10px 14px',
+            fontWeight: 400,
+            color: 'rgba(0, 0, 0, 0.85)',
+          },
+        }}
+        suffix={false}
+        onSubmit={(val) => {
+          if (loading || uploading) return;
+          if (!val.trim() && !uploadId) return;
 
-        // Get file URL from attachment items if available
-        const fileUrl =
-          attachmentItems.length > 0 ? attachmentItems[0].url : undefined;
-
-        onSubmit(val, uploadId, contentType, fileUrl);
-        // 发送后清除上传状态
-        clearUpload();
-      }}
-      onCancel={onCancel}
-      footer={(_, { components }) => {
-        const { SendButton, LoadingButton } = components;
-        return (
-          <Flex justify="space-between" align="center">
-            {/* 左侧：上传 + Web搜索和知识库检索 */}
-            <Flex gap="small" align="center">
+          const fileUrl = attachmentItems.length > 0 ? attachmentItems[0].url : undefined;
+          onSubmit(val, uploadId, contentType, fileUrl);
+          clearUpload();
+        }}
+        onCancel={onCancel}
+        footer={() => (
+          <div className={styles.footer}>
+            <div className={styles.footerLeft}>
               <Dropdown
-                menu={{ items }}
+                menu={{ items: uploadItems }}
                 placement="topLeft"
                 trigger={["click"]}
               >
-                <Button type="text" icon={<PlusOutlined />} />
+                <button className={styles.iconButton}>
+                  <PlusOutlined style={{ fontSize: 16 }} />
+                </button>
               </Dropdown>
-              <Divider orientation="vertical" />
-              <Sender.Switch
-                key="web"
-                styles={{
-                  content: {
-                    borderRadius: 16
+
+              <div className={styles.modelSelectorDivider} />
+
+              <Dropdown
+                menu={{ items: menuItems }}
+                trigger={["click"]}
+                placement="topLeft"
+                open={modelDropdownOpen}
+                onOpenChange={(open) => {
+                  setModelDropdownOpen(open);
+                  if (open) {
+                    setSearchValue("");
                   }
                 }}
-                icon={<SearchOutlined />}
-                value={searchMode === "web"}
-                onChange={() => {
-                  if (searchMode === "web") {
-                    onSearchModeChange(null);
-                  } else {
-                    onSearchModeChange("web");
-                  }
-                }}
+                popupRender={(menu) => (
+                  <div className={styles.modelDropdownPopup}>
+                    <div className={styles.modelSearchBox}>
+                      <Input
+                        placeholder="搜索模型..."
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        allowClear
+                        variant="borderless"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    {React.isValidElement(menu) ? React.cloneElement(menu as React.ReactElement<any>) : menu}
+                  </div>
+                )}
               >
-                搜索
-              </Sender.Switch>
-              <Sender.Switch
-                key="think"
-                styles={{
-                  content: {
-                    borderRadius: 16
-                  }
-                }}
-                value={searchMode === "think"}
-                disabled={!isThinkingSupported}
-                onChange={() => {
-                  if (searchMode === "think") {
-                    onSearchModeChange(null);
-                  } else {
-                    onSearchModeChange("think");
-                  }
-                }}
-              >
-                深度思考
-              </Sender.Switch>
-              <Sender.Switch
-                key="kb"
-                styles={{
-                  content: {
-                    borderRadius: 16
-                  }
-                }} 
-                value={searchMode === "kb"}
-                onChange={() => {
-                  if (searchMode === "kb") {
-                    onSearchModeChange(null);
-                  } else {
-                    onKbSelectModalOpen();
-                  }
-                }}
-              >
-                {searchMode === "kb" && selectedKb
-                  ? "知识库：" + selectedKb.name
-                  : "知识库"}
-              </Sender.Switch>
-            </Flex>
-            {/* 右侧：发送按钮 */}
-            <Flex align="center" gap={8}>
+                <button className={styles.modelButton}>
+                  {displayIcon ? (
+                    <img src={displayIcon} alt="icon" className={styles.modelButtonIcon} />
+                  ) : (
+                    <RobotOutlined className={styles.modelButtonIcon} />
+                  )}
+                  <span className={styles.modelButtonText}>{displayModelName}</span>
+                  <DownOutlined className={styles.modelButtonArrow} />
+                </button>
+              </Dropdown>
+            </div>
+
+            <button
+              onClick={handleSend}
+              disabled={!canSend}
+              className={styles.sendButton}
+            >
               {loading ? (
-                <LoadingButton type="default" />
+                <LoadingOutlined style={{ fontSize: 16 }} />
               ) : (
-                <SendButton type="primary" disabled={disabled || uploading} />
+                <SendOutlined style={{ fontSize: 14 }} />
               )}
-            </Flex>
-          </Flex>
-        );
-      }}
-    />
+            </button>
+          </div>
+        )}
+      />
+    </div>
   );
 };
 
