@@ -52,6 +52,7 @@ const convertSessionMessageToChatMessage = (
     avatar: role === 'user' ? '👤' : '🤖',
     thinking: sessionMessage.thinking,
     toolNames: toolNames.length > 0 ? toolNames : undefined,
+    dateTime: sessionMessage.dateTime,
   };
 
   // 如果是 USER 消息且包含非 TEXT 类型的内容，添加文件相关信息

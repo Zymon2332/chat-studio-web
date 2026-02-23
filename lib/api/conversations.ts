@@ -40,6 +40,7 @@ export interface SessionMessage {
   toolRequests?: ToolRequest[]; // AI 消息的工具调用请求
   toolResponse?: ToolResponse; // TOOL_EXECUTION_RESULT 消息
   parentId?: number; // 保留用于排序
+  dateTime?: string; // 消息时间
 }
 
 // 创建会话接口

@@ -1,6 +1,34 @@
+.messageListWrapper {
+  width: 75%;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .bubbleList {
-  height: 100%;
-  overflow: auto;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.bubbleList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bubbleList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bubbleList::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.bubbleList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .bubbleItem {
@@ -72,4 +100,16 @@
 .cardContent {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.messageFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.dateTime {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
 }

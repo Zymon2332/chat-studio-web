@@ -1,13 +1,11 @@
-import { Avatar, Flex, message, Typography, theme, Image } from 'antd';
-import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import classNames from 'classnames';
+import { Flex, Typography, theme, Image } from 'antd';
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
 
 import { renderMarkdown } from '@/components/MarkdownRenderer';
 import { extractThinkingContent } from '@/lib/utils/thinkingUtils';
 import { extractAllToolNames, extractToolContent } from '@/lib/utils/toolUtils';
 import {
-    FileTextOutlined, FileImageOutlined, LoadingOutlined, RobotOutlined, ToolOutlined, UserOutlined,
-    FilePdfOutlined, VideoCameraOutlined, AudioOutlined
+    LoadingOutlined, ToolOutlined, FilePdfOutlined, VideoCameraOutlined, AudioOutlined
 } from '@ant-design/icons';
 import { Actions, Bubble, Sources, Think } from '@ant-design/x';
 
@@ -27,6 +25,7 @@ export interface ChatMessage {
   toolNames?: string[]; // 调用的工具名称列表
   contentType?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF'; // 文件类型
   fileUrl?: string; // 文件链接
+  dateTime?: string; // 消息时间
 }
 
 export interface ChatMessageListRef {
@@ -53,7 +52,7 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
   }));
 
   return (
-    <>
+    <div className={styles.messageListWrapper}>
       <Bubble.List
         ref={listRef}
         className={styles.bubbleList}
@@ -111,7 +110,7 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
                     return (
                       <div className={styles.filePlaceholder}>
                          <FilePdfOutlined className={styles.pdfIcon} />
-                         <Text ellipsis className={styles.fileName}>PDF文档</Text>
+                         <Text ellipsis className={styles.fileName}>PDF 文档</Text>
                       </div>
                     );
                   default:
@@ -126,6 +125,11 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
                 </div>
               );
             },
+            footer: (msg: any) => (
+              <div className={styles.messageFooter}>
+                {msg.dateTime && <span className={styles.dateTime}>{msg.dateTime}</span>}
+              </div>
+            ),
           },
           assistant: {
             placement: "start",
@@ -197,36 +201,39 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
                 </div>
               );
             },
-            footer: (messageContext: any) => (
-              <Actions
-                items={[
-                  {
-                    key: "copy",
-                    label: "copy",
-                    actionRender: () => {
-                      return <Actions.Copy text={messageContext.content} />;
+            footer: (msg: any) => (
+              <div className={styles.messageFooter}>
+                <Actions
+                  items={[
+                    {
+                      key: "copy",
+                      label: "copy",
+                      actionRender: () => {
+                        return <Actions.Copy text={msg.content} />;
+                      },
                     },
-                  },
-                  {
-                    key: "feedback",
-                    actionRender: () => (
-                      <Actions.Feedback
-                        styles={{
-                          liked: {
-                            color: "#f759ab",
-                          },
-                        }}
-                        key="feedback"
-                      />
-                    ),
-                  },
-                ]}
-              />
+                    {
+                      key: "feedback",
+                      actionRender: () => (
+                        <Actions.Feedback
+                          styles={{
+                            liked: {
+                              color: "#f759ab",
+                            },
+                          }}
+                          key="feedback"
+                        />
+                      ),
+                    },
+                  ]}
+                />
+                {msg.dateTime && <span className={styles.dateTime}>{msg.dateTime}</span>}
+              </div>
             ),
           },
         }}
       />
-    </>
+    </div>
   );
 });
 

@@ -313,41 +313,44 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   }, [filteredModelList, onModelSelect, searchValue]);
 
   return (
-    <div className={styles.wrapper}>
-      <Sender
-        header={fileName || uploading ? senderHeader : undefined}
-        value={value}
-        onChange={onChange}
-        placeholder="输入消息..."
-        allowSpeech={true}
-        disabled={disabled}
-        autoSize={{ minRows: 1, maxRows: 3 }}
-        styles={{
-          root: {
-            borderRadius: 20,
-            boxShadow: 'none',
-            border: 'none',
-            background: 'transparent',
-          },
-          input: {
-            fontSize: 14,
-            lineHeight: 1.5,
-            padding: '10px 14px',
-            fontWeight: 400,
-            color: 'rgba(0, 0, 0, 0.85)',
-          },
-        }}
-        suffix={false}
-        onSubmit={(val) => {
-          if (loading || uploading) return;
-          if (!val.trim() && !uploadId) return;
+    <div className={styles.inputWrapper}>
+      <div className={styles.wrapper}>
+        <Sender
+          header={fileName || uploading ? senderHeader : undefined}
+          value={value}
+          onChange={onChange}
+          placeholder="输入消息..."
+          allowSpeech={true}
+          disabled={disabled}
+          autoSize={{ minRows: 1, maxRows: 3 }}
+          styles={{
+            root: {
+              borderRadius: 20,
+              boxShadow: 'none',
+              border: 'none',
+              background: 'transparent',
+            },
+            input: {
+              fontSize: 14,
+              lineHeight: 1.5,
+              padding: '10px 14px',
+              fontWeight: 400,
+              color: 'rgba(0, 0, 0, 0.85)',
+            },
+          }}
+          submitType="enter"
+          suffix={false}
+          onSubmit={(val) => {
+            console.log('onSubmit called with:', val, 'loading:', loading, 'uploading:', uploading, 'value:', value);
+            if (loading || uploading) return;
+            if (!val.trim() && !uploadId) return;
 
-          const fileUrl = attachmentItems.length > 0 ? attachmentItems[0].url : undefined;
-          onSubmit(val, uploadId, contentType, fileUrl);
-          clearUpload();
-        }}
-        onCancel={onCancel}
-        footer={() => (
+            const fileUrl = attachmentItems.length > 0 ? attachmentItems[0].url : undefined;
+            onSubmit(val, uploadId, contentType, fileUrl);
+            clearUpload();
+          }}
+          onCancel={onCancel}
+          footer={() => (
           <div className={styles.footer}>
             <div className={styles.footerLeft}>
               <Dropdown
@@ -416,6 +419,7 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
           </div>
         )}
       />
+      </div>
     </div>
   );
 };
