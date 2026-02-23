@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
-import {
-  ArrowDownOutlined,
-} from "@ant-design/icons";
-import { message as antdMessage, Splitter, FloatButton } from "antd";
+import { message as antdMessage, Splitter } from "antd";
 import {
   getSessionList,
   SessionItem,
@@ -37,26 +34,33 @@ import styles from "./page.module.css";
 const convertSessionMessageToChatMessage = (
   sessionMessage: SessionMessage
 ): ChatMessage => {
+  // 根据 messageType 判断角色
+  const role = sessionMessage.messageType === 'USER' ? 'user' : 'assistant';
+  
+  // USER 消息：从 contents[0].text 获取内容
+  // AI 消息：从 text 获取内容
+  const content = sessionMessage.messageType === 'USER' 
+    ? sessionMessage.contents?.[0]?.text || ''
+    : sessionMessage.text || '';
+  
+  // 从 toolRequests 提取工具名称列表
+  const toolNames = sessionMessage.toolRequests?.map(tr => tr.name) || [];
+  
   const chatMessage: ChatMessage = {
-    content: sessionMessage.message,
-    role: sessionMessage.messageType === "USER" ? "user" : "assistant",
-    avatar: sessionMessage.messageType === "USER" ? "👤" : "🤖",
-    modelName: sessionMessage.modelName,
+    content,
+    role,
+    avatar: role === 'user' ? '👤' : '🤖',
+    thinking: sessionMessage.thinking,
+    toolNames: toolNames.length > 0 ? toolNames : undefined,
   };
 
-  // 如果是 USER 消息且包含 content 字段，添加文件相关信息
-  if (sessionMessage.messageType === "USER" && sessionMessage.content) {
-    chatMessage.fileUrl = sessionMessage.content.content;
-    chatMessage.contentType = sessionMessage.content.contentType;
-  }
-
-  // 如果是 AI 消息且包含工具调用信息，添加 toolNames 字段
-  if (
-    sessionMessage.messageType === "ASSISTANT" &&
-    sessionMessage.toolNames &&
-    sessionMessage.toolNames.length > 0
-  ) {
-    chatMessage.toolNames = sessionMessage.toolNames;
+  // 如果是 USER 消息且包含非 TEXT 类型的内容，添加文件相关信息
+  if (sessionMessage.messageType === 'USER' && sessionMessage.contents) {
+    const fileContent = sessionMessage.contents.find(c => c.contentType !== 'TEXT');
+    if (fileContent) {
+      chatMessage.fileUrl = fileContent.text;
+      chatMessage.contentType = fileContent.contentType as any;
+    }
   }
 
   return chatMessage;
@@ -69,7 +73,6 @@ const ChatPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string>("");
   
   const chatListRef = useRef<ChatMessageListRef>(null);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   // 用于控制 Sender 输入框的值
   const [inputValue, setInputValue] = useState(""); 
@@ -148,12 +151,18 @@ const ChatPage: React.FC = () => {
   const loadSessionMessages = async (sessionId: string) => {
     try {
       const sessionMessages = await getSessionMessages(sessionId);
-      // 按照 parentId 关系排序消息，确保消息顺序正确
-      const sortedMessages = sessionMessages.sort((a, b) => a.id - b.id);
+      
+      // 过滤掉 TOOL_EXECUTION_RESULT 类型
+      const filteredMessages = sessionMessages.filter(
+        msg => msg.messageType !== 'TOOL_EXECUTION_RESULT'
+      );
+      
+      // 按 parentId 排序消息，确保消息顺序正确
+      const sortedMessages = filteredMessages.sort((a, b) => (a.parentId || 0) - (b.parentId || 0));
       
       // useXChat 需要 MessageInfo<T> 格式
-      const messageInfos = sortedMessages.map(msg => ({
-        id: msg.id.toString(),
+      const messageInfos = sortedMessages.map((msg, index) => ({
+        id: index.toString(),
         message: convertSessionMessageToChatMessage(msg),
         status: 'success' as const
       }));
@@ -221,37 +230,10 @@ const ChatPage: React.FC = () => {
     setMessages([]);
     setInputValue("");
     setPreviewVisible(false);
-    setShowScrollToBottom(false);
   };
 
-  // 滚动监听
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    
-    // 处理负值 scrollTop (通常出现在某些浏览器的 column-reverse 布局中)
-    // 如果 scrollTop <= 0，说明使用了反向滚动，0 通常是底部
-    // 注意：如果是标准滚动，0 是顶部。为了兼容反向滚动的底部检测，我们在 0 时也隐藏按钮
-    // 这是一个权衡：标准滚动的顶部也不会显示回到底部按钮，这通常是可以接受的
-    if (scrollTop <= 0) {
-      if (Math.abs(scrollTop) > 100) {
-        setShowScrollToBottom(true);
-      } else {
-        setShowScrollToBottom(false);
-      }
-      return;
-    }
-
-    // 标准滚动逻辑
-    // 当距离底部超过 100px 时显示按钮
-    if (scrollHeight > clientHeight && scrollHeight - scrollTop - clientHeight > 100) {
-      setShowScrollToBottom(true);
-    } else {
-      setShowScrollToBottom(false);
-    }
-  };
-
-  const scrollToBottom = () => {
-    chatListRef.current?.scrollToBottom();
+    // 滚动处理
   };
 
   const onSendMessage = (val: string, uploadId?: string, contentType?: string, fileUrl?: string) => {
@@ -274,7 +256,6 @@ const ChatPage: React.FC = () => {
             setSelectedId(key);
             setSessionId(key);
             setPreviewVisible(false);
-            setShowScrollToBottom(false);
             await loadSessionMessages(key);
           } catch (error) {
             console.error("切换会话失败:", error);
@@ -297,10 +278,10 @@ const ChatPage: React.FC = () => {
           <Splitter className={styles.splitter} onResize={setPanelSizes}>
               <Splitter.Panel size={panelSizes[0]} min="40%">
                 <div className={styles.splitterPanel}>
-                  {displayMessages.length === 0 ? (
-                    <ChatWelcome userName={userInfo?.nickName} />
-                  ) : (
-                    <div className={styles.messageListContainer}>
+                  <div className={styles.messageListContainer}>
+                    {displayMessages.length === 0 ? (
+                      <ChatWelcome userName={userInfo?.nickName} />
+                    ) : (
                       <ChatMessageList
                         ref={chatListRef}
                         messages={displayMessages}
@@ -308,30 +289,19 @@ const ChatPage: React.FC = () => {
                         onPreview={handlePreview}
                         onScroll={handleScroll}
                       />
-                      {showScrollToBottom && (
-                        <FloatButton
-                          icon={<ArrowDownOutlined />}
-                          onClick={scrollToBottom}
-                          style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 24 }}
-                        />
-                      )}
-                    </div>
-                  )}
-                  <div className={styles.bottomSenderWrapper}>
-                    <div className={styles.bottomSenderContainer}>
-                      <ChatMessageInput
-                        value={inputValue}
-                        onChange={setInputValue}
-                        onSubmit={onSendMessage}
-                        loading={sendingLoading}
-                        onCancel={handleCancel}
-                        selectedModel={selectedModel}
-                        defaultModel={defaultModel}
-                        modelList={modelList}
-                        onModelSelect={setSelectedModel}
-                      />
-                    </div>
+                    )}
                   </div>
+                  <ChatMessageInput
+                    value={inputValue}
+                    onChange={setInputValue}
+                    onSubmit={onSendMessage}
+                    loading={sendingLoading}
+                    onCancel={handleCancel}
+                    selectedModel={selectedModel}
+                    defaultModel={defaultModel}
+                    modelList={modelList}
+                    onModelSelect={setSelectedModel}
+                  />
                 </div>
               </Splitter.Panel>
               {previewVisible && (
@@ -358,7 +328,6 @@ const ChatPage: React.FC = () => {
           setSessionId(null);
           setMessages([]);
           setPreviewVisible(false);
-          setShowScrollToBottom(false);
         }}
       />
     </div>

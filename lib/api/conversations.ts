@@ -1,6 +1,6 @@
 import request from './request';
 
-// 创建会话接口返回的sessionId类型
+// 创建会话接口返回的 sessionId 类型
 export type SessionId = string;
 
 // 会话列表项类型
@@ -10,31 +10,36 @@ export interface SessionItem {
   updatedAt: number;
 }
 
-// 检索结果类型定义
-interface RetrieveResult {
-  kbId?: number;
-  docId?: string;
-  title: string;
-  chunkIndexs?: string[];
-  url?: string; // Web搜索时的URL
+// 内容项类型
+export interface ContentItem {
+  contentType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF';
+  text: string;
+}
+
+// 工具调用请求类型
+export interface ToolRequest {
+  id: string;
+  name: string;
+  argument: string; // JSON 字符串
+}
+
+// 工具调用响应类型
+export interface ToolResponse {
+  id: string; // 与对应的 ToolRequest.id 一致
+  toolName: string;
+  text: string;
+  isError: boolean | null;
 }
 
 // 会话消息类型
 export interface SessionMessage {
-  id: number;
-  sessionId: string;
-  message: string;
-  content?: {
-    content: string;
-    contentType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF';
-  };
-  thinking?: string; // 深度思考内容，仅在ASSISTANT消息中存在
-  messageType: 'USER' | 'ASSISTANT';
-  parentId: number;
-  modelName?: string; // 模型名称  
-  kbName?: string; // 知识库名称，仅在ASSISTANT消息中存在
-  retrieves?: RetrieveResult[]; // 检索结果，仅在ASSISTANT消息中存在
-  toolNames?: string[]; // 调用的工具名称列表，仅在ASSISTANT消息中存在
+  messageType: 'USER' | 'AI' | 'TOOL_EXECUTION_RESULT';
+  contents?: ContentItem[]; // USER 消息
+  text?: string; // AI 消息或 USER 消息的文本
+  thinking?: string; // AI 消息的思考过程
+  toolRequests?: ToolRequest[]; // AI 消息的工具调用请求
+  toolResponse?: ToolResponse; // TOOL_EXECUTION_RESULT 消息
+  parentId?: number; // 保留用于排序
 }
 
 // 创建会话接口
@@ -67,22 +72,18 @@ export const updateSessionTitle = (sessionId: string, title: string): Promise<vo
 export interface ChatRequest {
   sessionId: string;
   prompt: string;
-  providerId?: string; // 模型提供商ID
+  providerId?: string; // 模型提供商 ID
   modelName?: string; // 模型名称
-  search?: boolean;
-  retrieval?: boolean;
-  thinking?: boolean;
-  kbId?: number; // 知识库ID，当retrieval为true时使用
-  uploadId?: string; // 上传文件ID
+  uploadId?: string; // 上传文件 ID
   contentType?: string; // 上传文件类型
 }
 
-// 聊天接口返回类型 - 流式响应，这里只做类型声明
+// 聊天接口返回类型 - 流式响应
 export type ChatResponse = string;
 
 // 流式聊天接口
 export const chatStream = async (data: ChatRequest, signal?: AbortSignal): Promise<ReadableStreamDefaultReader<Uint8Array>> => {
-  // 使用fetch API处理流式响应，因为axios在浏览器中不支持stream
+  // 使用 fetch API 处理流式响应
   const baseUrl = '/api';
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
   
@@ -94,7 +95,7 @@ export const chatStream = async (data: ChatRequest, signal?: AbortSignal): Promi
       ...(token ? { 'Auth-Token': token } : {}),
     },
     body: JSON.stringify(data),
-    signal, // 添加 AbortSignal 支持
+    signal,
   });
 
   if (!response.ok) {

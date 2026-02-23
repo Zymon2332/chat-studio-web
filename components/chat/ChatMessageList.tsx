@@ -1,13 +1,12 @@
-import { Avatar, Card, Drawer, Flex, message, Spin, Tag, Typography, Image, theme } from 'antd';
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { Avatar, Flex, message, Typography, theme, Image } from 'antd';
+import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import classNames from 'classnames';
 
 import { renderMarkdown } from '@/components/MarkdownRenderer';
-import { DocumentChunk, getRetrieveChunks } from '@/lib/api/documents';
 import { extractThinkingContent } from '@/lib/utils/thinkingUtils';
 import { extractAllToolNames, extractToolContent } from '@/lib/utils/toolUtils';
 import {
-    FileTextOutlined, LoadingOutlined, RobotOutlined, SearchOutlined, ToolOutlined, UserOutlined,
+    FileTextOutlined, FileImageOutlined, LoadingOutlined, RobotOutlined, ToolOutlined, UserOutlined,
     FilePdfOutlined, VideoCameraOutlined, AudioOutlined
 } from '@ant-design/icons';
 import { Actions, Bubble, Sources, Think } from '@ant-design/x';
@@ -16,15 +15,6 @@ import styles from './ChatMessageList.module.css';
 
 const { Text } = Typography;
 
-// 检索结果类型定义
-interface RetrieveResult {
-  chunkIndexs?: string[];
-  docId?: string;
-  kbId?: number;
-  title: string;
-  url?: string; // Web搜索时的URL
-}
-
 // 聊天消息类型定义
 export interface ChatMessage {
   content: string;
@@ -32,13 +22,9 @@ export interface ChatMessage {
   avatar?: string;
   isLoading?: boolean;
   displayContent?: string; // 用于打字机效果的显示内容
-  retrieveMode?: boolean; // 是否是检索模式
-  kbName?: string; // 知识库名称
-  retrieves?: RetrieveResult[]; // 检索结果
   thinking?: string; // 深度思考内容
   thinkingDuration?: number; // 深度思考耗时，单位为秒
-  toolNames?: string[]; // 调用的工具名称列表，仅在ASSISTANT消息中存在
-  modelName?: string; // 模型名称
+  toolNames?: string[]; // 调用的工具名称列表
   contentType?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF'; // 文件类型
   fileUrl?: string; // 文件链接
 }
@@ -57,46 +43,14 @@ export interface ChatMessageListProps {
 }
 
 const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ messages, onPreview, onScroll }, ref) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [drawerTitle, setDrawerTitle] = useState("");
-  const [drawerLoading, setDrawerLoading] = useState(false);
-  const [retrievedChunks, setRetrievedChunks] = useState<DocumentChunk[]>([]);
   const listRef = useRef<any>(null);
   const { token } = theme.useToken();
 
   useImperativeHandle(ref, () => ({
     scrollToBottom: () => {
-      listRef.current?.scrollTo({ top: 'bottom', behavior: 'smooth' })
+      // 使用 autoScroll 属性自动滚动
     }
   }));
-
-  // 监听消息列表长度变化（新消息发送/接收时），自动滚动到底部
-  useEffect(() => {
-    if (messages.length > 0) {
-      listRef.current?.scrollTo({ top: 'bottom', behavior: 'smooth' });
-    }
-  }, [messages.length]);
-
-  const handleSourceClick = async (
-    docId: string,
-    title: string,
-    chunkIndexs: string[]
-  ) => {
-    setDrawerTitle(title);
-    setDrawerVisible(true);
-    setDrawerLoading(true);
-    setRetrievedChunks([]);
-
-    try {
-      const chunks = await getRetrieveChunks(docId, chunkIndexs);
-      setRetrievedChunks(chunks);
-    } catch (error) {
-      console.error("Failed to fetch chunks:", error);
-      message.error("获取分块内容失败");
-    } finally {
-      setDrawerLoading(false);
-    }
-  };
 
   return (
     <>
@@ -110,7 +64,6 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
           className: styles.bubbleItem,
           content: { ...msg, messageIndex: index },
           role: msg.role,
-          header: msg.role === "assistant" ? msg.modelName : undefined,
           loading: msg.isLoading,
           variant: msg.role === 'user' ? "shadow" : 'borderless',
           styles: {
@@ -227,51 +180,6 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
                     </Think>
                   )}
 
-                  {/* 检索结果显示 */}
-                  {msg.retrieveMode && msg.retrieves && (
-                    <Sources
-                      items={msg.retrieves.map((r) => ({
-                        key: r.docId || r.url || r.title,
-                        title: r.title,
-                        icon: msg.kbName ? (
-                          <FileTextOutlined />
-                        ) : (
-                          <SearchOutlined />
-                        ),
-                      }))}
-                      onClick={(item) => {
-                        const r = msg.retrieves?.find(
-                          (retrieve) =>
-                            (retrieve.docId ||
-                              retrieve.url ||
-                              retrieve.title) === item.key
-                        );
-                        if (r) {
-                          if (msg.kbName) {
-                            // 知识库检索模式
-                            if (r.docId && r.chunkIndexs) {
-                              handleSourceClick(
-                                r.docId,
-                                r.title,
-                                r.chunkIndexs
-                              );
-                            }
-                          } else {
-                            // Web搜索模式
-                            if (r.url) {
-                              window.open(r.url, "_blank");
-                            }
-                          }
-                        }
-                      }}
-                      title={
-                        msg.kbName
-                          ? `在知识库「${msg.kbName}」中找到 ${msg.retrieves.length} 个相关文件`
-                          : `已搜索 ${msg.retrieves.length} 个网页内容`
-                      }
-                    />
-                  )}
-
                   {/* 工具调用显示 */}
                   {allToolNames.length > 0 && (
                     <Sources
@@ -318,44 +226,6 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
           },
         }}
       />
-
-      <Drawer
-        title={drawerTitle}
-        placement="right"
-        onClose={() => setDrawerVisible(false)}
-        open={drawerVisible}
-        size={600}
-      >
-        <Spin spinning={drawerLoading}>
-          <Flex vertical gap={16}>
-            {retrievedChunks.map((chunk, index) => (
-              <Card
-                key={chunk.chunkId || index}
-                size="small"
-                title={
-                  <Flex align="center" gap="small">
-                    <span>
-                      分块{" "}
-                      {chunk.chunkIndex !== undefined
-                        ? chunk.chunkIndex
-                        : index + 1}
-                    </span>
-                    {chunk.chunkId && (
-                      <Tag color="blue">ID: {chunk.chunkId}</Tag>
-                    )}
-                  </Flex>
-                }
-                type="inner"
-                variant="borderless"
-              >
-                <div className={styles.cardContent}>
-                  {chunk.content}
-                </div>
-              </Card>
-            ))}
-          </Flex>
-        </Spin>
-      </Drawer>
     </>
   );
 });

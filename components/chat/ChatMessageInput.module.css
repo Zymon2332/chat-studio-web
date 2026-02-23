@@ -1,5 +1,7 @@
 .wrapper {
-  width: 100%;
+  width: 75%;
+  max-width: 900px;
+  margin: 0 auto 20px;
   background: #fff;
   border-radius: 20px;
   border: 1px solid rgba(0, 0, 0, 0.06);

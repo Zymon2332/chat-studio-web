@@ -90,7 +90,6 @@ export const useChat = ({
           avatar: "🤖",
           isLoading: true,
           displayContent: "",
-          modelName: modelToUse?.modelName || undefined,
         },
         status: "loading",
       };
@@ -114,6 +113,7 @@ export const useChat = ({
         const reader = await chatStream(requestData, controller.signal);
 
         let fullContent = "";
+        let fullThinking = "";
         let buffer = "";
         let isFirstUpdate = true;
 
@@ -132,6 +132,7 @@ export const useChat = ({
           buffer = lines.pop() || "";
 
           let chunkContentDelta = "";
+          let chunkThinkingDelta = "";
           let hasUpdates = false;
 
           for (const line of lines) {
@@ -141,7 +142,14 @@ export const useChat = ({
 
             try {
               const jsonData = JSON.parse(data);
-              if (jsonData.content) {
+              if (jsonData.text) {
+                chunkContentDelta += jsonData.text;
+                hasUpdates = true;
+              } else if (jsonData.thinking) {
+                chunkThinkingDelta += jsonData.thinking;
+                hasUpdates = true;
+              } else if (jsonData.content) {
+                // 兼容旧格式
                 chunkContentDelta += jsonData.content;
                 hasUpdates = true;
               }
@@ -153,6 +161,7 @@ export const useChat = ({
 
           if (hasUpdates || isFirstUpdate) {
             fullContent += chunkContentDelta;
+            fullThinking += chunkThinkingDelta;
             isFirstUpdate = false;
 
             setMessages((prevMessages) => {
@@ -165,6 +174,7 @@ export const useChat = ({
                       ...msg.message,
                       content: fullContent,
                       displayContent: fullContent,
+                      thinking: fullThinking || undefined,
                       isLoading: false,
                     },
                   };
@@ -186,6 +196,7 @@ export const useChat = ({
                   isLoading: false,
                   content: fullContent,
                   displayContent: fullContent,
+                  thinking: fullThinking || undefined,
                 },
               };
             }

@@ -30,29 +30,25 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  position: relative;
+  background: #f5f7fa;
 }
 
 .messageListContainer {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
-.bottomSenderWrapper {
+.messageListContainer::after {
+  content: '';
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1100px;
-  display: flex;
-  justify-content: flex-start;
-  z-index: 10;
-}
-
-.bottomSenderContainer {
-  width: 100%;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(245, 247, 250, 0.3) 40%, rgba(245, 247, 250, 0.8) 70%, rgba(245, 247, 250, 1) 100%);
+  pointer-events: none;
 }
 
 .confirmModal :global(.ant-modal-body) {
