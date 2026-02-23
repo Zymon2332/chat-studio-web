@@ -33,7 +33,7 @@ import { useChat } from "@/lib/hooks/useChat";
 
 import styles from "./page.module.css";
 
-// 将API消息转换为组件消息格式
+// 将 API 消息转换为组件消息格式
 const convertSessionMessageToChatMessage = (
   sessionMessage: SessionMessage
 ): ChatMessage => {
@@ -44,29 +44,13 @@ const convertSessionMessageToChatMessage = (
     modelName: sessionMessage.modelName,
   };
 
-  // 如果是USER消息且包含content字段，添加文件相关信息
+  // 如果是 USER 消息且包含 content 字段，添加文件相关信息
   if (sessionMessage.messageType === "USER" && sessionMessage.content) {
     chatMessage.fileUrl = sessionMessage.content.content;
     chatMessage.contentType = sessionMessage.content.contentType;
   }
 
-  // 如果是AI消息且包含thinking内容，添加thinking字段
-  if (sessionMessage.messageType === "ASSISTANT" && sessionMessage.thinking) {
-    chatMessage.thinking = sessionMessage.thinking;
-  }
-
-  // 如果是AI消息且包含检索结果，添加检索相关数据
-  if (
-    sessionMessage.messageType === "ASSISTANT" &&
-    sessionMessage.retrieves &&
-    sessionMessage.retrieves.length > 0
-  ) {
-    chatMessage.retrieveMode = true;
-    chatMessage.kbName = sessionMessage.kbName;
-    chatMessage.retrieves = sessionMessage.retrieves;
-  }
-
-  // 如果是AI消息且包含工具调用信息，添加toolNames字段
+  // 如果是 AI 消息且包含工具调用信息，添加 toolNames 字段
   if (
     sessionMessage.messageType === "ASSISTANT" &&
     sessionMessage.toolNames &&
@@ -87,7 +71,7 @@ const ChatPage: React.FC = () => {
   const chatListRef = useRef<ChatMessageListRef>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
-  // 用于控制Sender输入框的值
+  // 用于控制 Sender 输入框的值
   const [inputValue, setInputValue] = useState(""); 
   
   const [loading, setLoading] = useState<boolean>(true);
@@ -155,7 +139,7 @@ const ChatPage: React.FC = () => {
     },
   });
 
-  // 转换消息列表，使用useMemo优化性能
+  // 转换消息列表，使用 useMemo 优化性能
   const displayMessages = useMemo(() => {
     return messages.map(m => m.message);
   }, [messages]);
@@ -164,7 +148,7 @@ const ChatPage: React.FC = () => {
   const loadSessionMessages = async (sessionId: string) => {
     try {
       const sessionMessages = await getSessionMessages(sessionId);
-      // 按照parentId关系排序消息，确保消息顺序正确
+      // 按照 parentId 关系排序消息，确保消息顺序正确
       const sortedMessages = sessionMessages.sort((a, b) => a.id - b.id);
       
       // useXChat 需要 MessageInfo<T> 格式
@@ -258,7 +242,7 @@ const ChatPage: React.FC = () => {
     }
 
     // 标准滚动逻辑
-    // 当距离底部超过100px时显示按钮
+    // 当距离底部超过 100px 时显示按钮
     if (scrollHeight > clientHeight && scrollHeight - scrollTop - clientHeight > 100) {
       setShowScrollToBottom(true);
     } else {
@@ -271,7 +255,7 @@ const ChatPage: React.FC = () => {
   };
 
   const onSendMessage = (val: string, uploadId?: string, contentType?: string, fileUrl?: string) => {
-    handleSubmit(val, selectedModel || defaultModel, null, null, uploadId, contentType, fileUrl);
+    handleSubmit(val, selectedModel || defaultModel, uploadId, contentType, fileUrl);
     setInputValue("");
   };
 

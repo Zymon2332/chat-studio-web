@@ -101,8 +101,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
       } else {
         return {
           background: isHovered ? token.colorPrimaryBg : 'transparent',
-          color: token.colorPrimary,
-          opacity: isHovered ? 1 : 0.7,
+          color: isHovered ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.45)',
           fontWeight: 600,
         };
       }

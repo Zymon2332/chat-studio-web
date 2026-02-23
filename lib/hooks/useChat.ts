@@ -8,7 +8,6 @@ import {
   createSession,
 } from "@/lib/api/conversations";
 import { ModelListItem, DefaultModel } from "@/lib/api/models";
-import { KnowledgeBase } from "@/lib/api/knowledgebase";
 
 interface UseChatProps {
   initialSessionId: string | null;
@@ -43,8 +42,6 @@ export const useChat = ({
     async (
       message: string,
       modelToUse: ModelListItem | DefaultModel | null,
-      searchMode: "web" | "kb" | "think" | null,
-      selectedKb: KnowledgeBase | null,
       uploadId?: string,
       contentType?: string,
       fileUrl?: string
@@ -107,10 +104,6 @@ export const useChat = ({
           prompt: message,
           ...(modelToUse?.providerId && { providerId: modelToUse.providerId }),
           ...(modelToUse?.modelName && { modelName: modelToUse.modelName }),
-          search: searchMode === "web",
-          retrieval: searchMode === "kb",
-          thinking: searchMode === "think",
-          ...(searchMode === "kb" && selectedKb && { kbId: selectedKb.id }),
           ...(uploadId && { uploadId }),
           ...(contentType && { contentType }),
         };
@@ -121,12 +114,10 @@ export const useChat = ({
         const reader = await chatStream(requestData, controller.signal);
 
         let fullContent = "";
-        let fullThinking = "";
-        let retrieveData: Partial<ChatMessage> | undefined;
-
-        const decoder = new TextDecoder();
         let buffer = "";
         let isFirstUpdate = true;
+
+        const decoder = new TextDecoder();
 
         while (true) {
           const { done, value } = await reader.read();
@@ -138,11 +129,9 @@ export const useChat = ({
           buffer += chunk;
 
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep incomplete line
+          buffer = lines.pop() || "";
 
           let chunkContentDelta = "";
-          let chunkThinkingDelta = "";
-          let chunkRetrieveData: Partial<ChatMessage> | undefined;
           let hasUpdates = false;
 
           for (const line of lines) {
@@ -152,51 +141,31 @@ export const useChat = ({
 
             try {
               const jsonData = JSON.parse(data);
-              if (jsonData.retrieveMode === true) {
-                chunkRetrieveData = {
-                  retrieveMode: true,
-                  kbName: jsonData.kbName,
-                  retrieves: jsonData.retrieves,
-                };
-                hasUpdates = true;
-              } else if (jsonData.content) {
+              if (jsonData.content) {
                 chunkContentDelta += jsonData.content;
-                hasUpdates = true;
-              } else if (jsonData.thinking) {
-                chunkThinkingDelta += jsonData.thinking;
                 hasUpdates = true;
               }
             } catch {
-              // Fallback for non-JSON
               chunkContentDelta += data;
               hasUpdates = true;
             }
           }
 
-          // If it's the first update or we have content updates, we should update the state
           if (hasUpdates || isFirstUpdate) {
             fullContent += chunkContentDelta;
-            fullThinking += chunkThinkingDelta;
-            if (chunkRetrieveData) {
-              retrieveData = { ...retrieveData, ...chunkRetrieveData };
-            }
-            
             isFirstUpdate = false;
 
-            // Use functional update to update the specific AI message
             setMessages((prevMessages) => {
               return prevMessages.map((msg) => {
                 if (msg.id === aiMsgId) {
                   return {
                     ...msg,
-                    status: "loading", // Still loading stream
+                    status: "loading",
                     message: {
                       ...msg.message,
                       content: fullContent,
                       displayContent: fullContent,
-                      thinking: fullThinking || undefined,
-                      isLoading: false, // IMPORTANT: Set isLoading to false once we start receiving data
-                      ...(retrieveData || {}),
+                      isLoading: false,
                     },
                   };
                 }
@@ -206,7 +175,6 @@ export const useChat = ({
           }
         }
 
-        // Final success state
         setMessages((prevMessages) => {
           return prevMessages.map((msg) => {
             if (msg.id === aiMsgId) {
@@ -218,8 +186,6 @@ export const useChat = ({
                   isLoading: false,
                   content: fullContent,
                   displayContent: fullContent,
-                  thinking: fullThinking || undefined,
-                  ...(retrieveData || {}),
                 },
               };
             }
