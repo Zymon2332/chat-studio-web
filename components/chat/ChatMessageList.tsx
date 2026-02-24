@@ -31,13 +31,10 @@ export interface ChatMessage {
 // 组件属性接口
 export interface ChatMessageListProps {
   messages: ChatMessage[];
-  style?: React.CSSProperties;
-  isViewingHistory?: boolean; // 是否正在查看历史消息
   onPreview?: (content: string) => void;
-  onScroll?: (e: React.UIEvent<HTMLElement>) => void;
 }
 
-const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview, onScroll }) => {
+const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }) => {
   const { token } = theme.useToken();
 
   return (
@@ -45,7 +42,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview, 
       <Bubble.List
         className={styles.bubbleList}
         autoScroll
-        onScroll={onScroll}
         items={messages.map((msg, index) => ({
           key: index,
           className: styles.bubbleItem,

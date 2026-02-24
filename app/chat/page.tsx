@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 import { message as antdMessage, Splitter } from "antd";
 import {
@@ -8,6 +8,7 @@ import {
   SessionItem,
   getSessionMessages,
   SessionMessage,
+  ToolRequest,
 } from "@/lib/api/conversations";
 import SessionManageModal from "@/components/SessionManageModal";
 import ChatSidebar from "@/components/chat/ChatSidebar";
@@ -20,7 +21,6 @@ import {
   getDefaultModel,
   DefaultModel,
   ModelListItem,
-  setDefaultModel as setDefaultModelAPI,
   ModelProviderWithModels,
   getModelList,
 } from "@/lib/api/models";
@@ -74,10 +74,8 @@ const ChatPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string>("");
 
   // 用于控制 Sender 输入框的值
-  const [inputValue, setInputValue] = useState(""); 
-  
-  const [loading, setLoading] = useState<boolean>(true);
-  
+  const [inputValue, setInputValue] = useState("");
+
   const [sessionManageModalVisible, setSessionManageModalVisible] =
     useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<ModelListItem | null>(
@@ -110,13 +108,10 @@ const ChatPage: React.FC = () => {
   // 加载会话列表
   const loadSessionList = async () => {
     try {
-      setLoading(true);
       const sessions = await getSessionList();
       setSessions(sessions);
     } catch (error) {
       console.error("加载会话列表失败:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -124,7 +119,6 @@ const ChatPage: React.FC = () => {
   const {
     messages,
     setMessages,
-    sessionId,
     setSessionId,
     sendingLoading,
     handleSubmit,
@@ -159,15 +153,65 @@ const ChatPage: React.FC = () => {
       // 按 parentId 排序消息，确保消息顺序正确
       const sortedMessages = filteredMessages.sort((a, b) => (a.parentId || 0) - (b.parentId || 0));
       
+      // 处理消息：收集所有工具调用请求，然后合并到后面的 AI 回复消息
+      const processedMessages: SessionMessage[] = [];
+      const pendingToolRequests: ToolRequest[] = [];
+      
+      for (let i = 0; i < sortedMessages.length; i++) {
+        const msg = sortedMessages[i];
+        
+        // 检查是否是纯工具调用请求消息（AI 类型、有 toolRequests、且 text 为空或只有空白字符）
+        const isToolOnlyMessage = msg.messageType === 'AI' && 
+                                  msg.toolRequests && 
+                                  msg.toolRequests.length > 0 &&
+                                  (!msg.text || msg.text.trim() === '');
+        
+        if (isToolOnlyMessage) {
+          // 收集工具调用请求，暂不添加到 processedMessages
+          if (msg.toolRequests) {
+            pendingToolRequests.push(...msg.toolRequests);
+          }
+        } else {
+          // 如果是有实际内容的 AI 消息，且有待处理的工具调用请求，则合并
+          if (msg.messageType === 'AI' && msg.text && msg.text.trim() !== '' && pendingToolRequests.length > 0) {
+            // 合并工具调用请求到当前 AI 消息
+            const existingToolNames = new Set(msg.toolRequests?.map(tr => tr.name) || []);
+            pendingToolRequests.forEach(tr => {
+              if (!existingToolNames.has(tr.name)) {
+                if (!msg.toolRequests) {
+                  msg.toolRequests = [];
+                }
+                msg.toolRequests.push(tr);
+                existingToolNames.add(tr.name);
+              }
+            });
+            // 清空待处理的工具调用请求
+            pendingToolRequests.length = 0;
+          }
+          processedMessages.push(msg);
+        }
+      }
+      
+      // 如果遍历结束后还有未合并的工具调用请求，作为独立消息添加
+      if (pendingToolRequests.length > 0) {
+        // 创建一个工具调用请求消息
+        const toolOnlyMessage: SessionMessage = {
+          messageType: 'AI',
+          text: '',
+          toolRequests: pendingToolRequests,
+        };
+        processedMessages.push(toolOnlyMessage);
+      }
+      
       // useXChat 需要 MessageInfo<T> 格式
-      const messageInfos = sortedMessages.map((msg, index) => ({
+      const messageInfos = processedMessages.map((msg, index) => ({
         id: index.toString(),
         message: convertSessionMessageToChatMessage(msg),
         status: 'success' as const
       }));
       
       setMessages(messageInfos);
-      return sortedMessages.map(convertSessionMessageToChatMessage);
+      return processedMessages.map(convertSessionMessageToChatMessage);
     } catch (error) {
       console.error("加载会话消息失败:", error);
       throw error;
@@ -231,10 +275,6 @@ const ChatPage: React.FC = () => {
     setPreviewVisible(false);
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-    // 滚动处理
-  };
-
   const onSendMessage = (val: string, uploadId?: string, contentType?: string, fileUrl?: string) => {
     handleSubmit(val, selectedModel || defaultModel, uploadId, contentType, fileUrl);
     setInputValue("");
@@ -283,9 +323,7 @@ const ChatPage: React.FC = () => {
                     ) : (
                       <ChatMessageList
                         messages={displayMessages}
-                        isViewingHistory={!!selectedId}
                         onPreview={handlePreview}
-                        onScroll={handleScroll}
                       />
                     )}
                   </div>
@@ -299,6 +337,7 @@ const ChatPage: React.FC = () => {
                     defaultModel={defaultModel}
                     modelList={modelList}
                     onModelSelect={setSelectedModel}
+                    showGradientOverlay={displayMessages.length > 0}
                   />
                 </div>
               </Splitter.Panel>

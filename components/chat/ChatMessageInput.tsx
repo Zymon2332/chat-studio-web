@@ -1,4 +1,4 @@
-import { Dropdown, MenuProps, Input } from "antd";
+import { MenuProps, Dropdown } from "antd";
 import React, { useRef } from "react";
 
 import {
@@ -7,18 +7,22 @@ import {
   FilePdfOutlined,
   VideoCameraOutlined,
   AudioOutlined,
-  RobotOutlined,
-  DownOutlined,
-  SlackCircleFilled
+  SlackCircleFilled,
 } from "@ant-design/icons";
 import { Sender, Attachments, AttachmentsProps } from "@ant-design/x";
 import { uploadFile } from "@/lib/api/upload";
+import ModelSelectButton from "@/components/ModelSelectButton";
 
 import styles from "./ChatMessageInput.module.css";
+
+import {
+  setDefaultModel,
+} from "@/lib/api/models";
 
 import type {
   ModelListItem,
   DefaultModel,
+  ModelProviderWithModels,
 } from "@/lib/api/models";
 
 interface ChatMessageInputProps {
@@ -35,8 +39,9 @@ interface ChatMessageInputProps {
   onCancel?: () => void;
   selectedModel?: ModelListItem | null;
   defaultModel?: DefaultModel | null;
-  modelList?: any[];
+  modelList?: ModelProviderWithModels[];
   onModelSelect?: (model: ModelListItem) => void;
+  showGradientOverlay?: boolean;
 }
 
 const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
@@ -50,6 +55,7 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   defaultModel,
   modelList,
   onModelSelect,
+  showGradientOverlay = true,
 }) => {
   const [uploadId, setUploadId] = React.useState<string | undefined>(undefined);
   const [contentType, setContentType] = React.useState<string | undefined>(undefined);
@@ -60,9 +66,6 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     NonNullable<AttachmentsProps["items"]>
   >([]);
   const [open, setOpen] = React.useState(false);
-
-  const [searchValue, setSearchValue] = React.useState("");
-  const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false);
 
   const attachmentsRef = useRef<any>(null);
 
@@ -156,6 +159,21 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     setAttachmentItems([]);
   };
 
+  // 处理模型选择，同时设置为默认模型
+  const handleModelSelect = async (model: ModelListItem) => {
+    // 先调用父组件的回调
+    if (onModelSelect) {
+      onModelSelect(model);
+    }
+    
+    // 然后调用设置默认模型的接口
+    try {
+      await setDefaultModel(model.id);
+    } catch (error) {
+      console.error("设置默认模型失败:", error);
+    }
+  };
+
   const uploadItems: MenuProps["items"] = [
     {
       key: "image",
@@ -218,102 +236,11 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
     </Sender.Header>
   );
 
-  const handleSend = () => {
-    if (loading || uploading || disabled) return;
-    if (!value.trim() && !uploadId) return;
-
-    const fileUrl = attachmentItems.length > 0 ? attachmentItems[0].url : undefined;
-    onSubmit(value, uploadId, contentType, fileUrl);
-    clearUpload();
-  };
-
   const canSend = !disabled && !uploading && (value.trim() || uploadId);
-
-  const displayModelName = selectedModel
-    ? selectedModel.modelName
-    : defaultModel
-    ? defaultModel.modelName
-    : "选择模型";
-
-  const displayIcon = selectedModel?.icon || defaultModel?.icon;
-
-  const filteredModelList = React.useMemo(() => {
-    if (!modelList) return [];
-    if (!searchValue) return modelList;
-
-    const lowerSearch = searchValue.toLowerCase();
-
-    return modelList
-      .map((provider) => {
-        const providerMatches = provider.providerName
-          .toLowerCase()
-          .includes(lowerSearch);
-
-        const filteredModels = provider.models.filter((model: any) =>
-          model.modelName.toLowerCase().includes(lowerSearch)
-        );
-
-        if (providerMatches) {
-          return provider;
-        }
-
-        if (filteredModels.length > 0) {
-          return {
-            ...provider,
-            models: filteredModels,
-          };
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-  }, [modelList, searchValue]);
-
-  const menuItems: MenuProps["items"] = React.useMemo(() => {
-    if (!filteredModelList || filteredModelList.length === 0) {
-      return [
-        {
-          key: "empty",
-          label: <span>{searchValue ? "未找到相关模型" : "暂无可用模型"}</span>,
-          disabled: true,
-        },
-      ];
-    }
-
-    return filteredModelList.map((provider: any) => ({
-      key: provider.providerId,
-      type: "group",
-      label: provider.providerName,
-      children: provider.models.map((model: any) => {
-        const iconUrl = model.icon || provider.icon;
-        return {
-          key: String(model.id),
-          label: <span>{model.modelName}</span>,
-          icon: iconUrl ? (
-            <img
-              src={iconUrl}
-              alt={model.modelName}
-              className={styles.menuItemIcon}
-              style={{ width: 20, height: 20, borderRadius: 4 }}
-            />
-          ) : (
-            <RobotOutlined />
-          ),
-          onClick: () =>
-            onModelSelect &&
-            onModelSelect({
-              ...model,
-              icon: iconUrl,
-              providerId: provider.providerId,
-            }),
-        };
-      }),
-    }));
-  }, [filteredModelList, onModelSelect, searchValue]);
 
   return (
     <div className={styles.inputWrapper}>
-      <div className={styles.gradientOverlay} />
+      {showGradientOverlay && <div className={styles.gradientOverlay} />}
       <div className={styles.wrapper}>
         <Sender
           header={fileName || uploading ? senderHeader : undefined}
@@ -366,44 +293,12 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
 
                   <div className={styles.modelSelectorDivider} />
 
-                  <Dropdown
-                    menu={{ items: menuItems }}
-                    trigger={["click"]}
-                    placement="topLeft"
-                    open={modelDropdownOpen}
-                    onOpenChange={(open) => {
-                      setModelDropdownOpen(open);
-                      if (open) {
-                        setSearchValue("");
-                      }
-                    }}
-                    popupRender={(menu) => (
-                      <div className={styles.modelDropdownPopup}>
-                        <div className={styles.modelSearchBox}>
-                          <Input
-                            placeholder="搜索模型..."
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            allowClear
-                            variant="borderless"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        {React.isValidElement(menu) ? React.cloneElement(menu as React.ReactElement<any>) : menu}
-                      </div>
-                    )}
-                  >
-                    <button className={styles.modelButton} aria-label="选择模型">
-                      {displayIcon ? (
-                        <img src={displayIcon} alt="icon" className={styles.modelButtonIcon} />
-                      ) : (
-                        <RobotOutlined className={styles.modelButtonIcon} />
-                      )}
-                      <span className={styles.modelButtonText}>{displayModelName}</span>
-                      <DownOutlined className={styles.modelButtonArrow} />
-                    </button>
-                  </Dropdown>
+                  <ModelSelectButton
+                    selectedModel={selectedModel}
+                    defaultModel={defaultModel}
+                    modelList={modelList}
+                    onModelSelect={handleModelSelect}
+                  />
                 </div>
 
                 {loading ? (
@@ -414,7 +309,7 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
               </div>
             );
           }}
-      />
+        />
       </div>
     </div>
   );

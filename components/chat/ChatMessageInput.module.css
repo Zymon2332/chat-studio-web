@@ -49,79 +49,6 @@
   margin: 0 4px;
 }
 
-.modelButton {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: 32px;
-}
-
-.modelButton:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.modelButtonIcon {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
-.modelButtonText {
-  text-align: left;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
-  font-weight: 500;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.modelButtonArrow {
-  font-size: 10px;
-  color: rgba(0, 0, 0, 0.35);
-  transition: transform 0.2s ease;
-}
-
-.modelButton:hover .modelButtonArrow {
-  transform: rotate(180deg);
-}
-
-.modelDropdownPopup {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  max-height: 400px;
-  overflow-y: auto;
-  min-width: 280px;
-}
-
-.modelSearchBox {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  background: #fafafa;
-  padding: 8px 12px;
-}
-
-.modelSearchBox input {
-  font-size: 13px;
-}
-
-.menuItemIcon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
 .iconButton {
   width: 32px;
   height: 32px;
@@ -139,39 +66,4 @@
 .iconButton:hover {
   background: rgba(0, 0, 0, 0.08);
   color: rgba(0, 0, 0, 0.65);
-}
-
-.sendButton {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: #007AFF;
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.sendButton:hover {
-  background: #0062CC;
-}
-
-.sendButton:disabled {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.25);
-  cursor: not-allowed;
-}
-
-.sendButton:disabled:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.menu {
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  padding: 4px;
 }
