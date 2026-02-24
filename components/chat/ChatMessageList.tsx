@@ -1,5 +1,5 @@
 import { Flex, Typography, theme, Image } from 'antd';
-import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import React from 'react';
 
 import { renderMarkdown } from '@/components/MarkdownRenderer';
 import { extractThinkingContent } from '@/lib/utils/thinkingUtils';
@@ -28,10 +28,6 @@ export interface ChatMessage {
   dateTime?: string; // 消息时间
 }
 
-export interface ChatMessageListRef {
-  scrollToBottom: () => void;
-}
-
 // 组件属性接口
 export interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -41,20 +37,12 @@ export interface ChatMessageListProps {
   onScroll?: (e: React.UIEvent<HTMLElement>) => void;
 }
 
-const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ messages, onPreview, onScroll }, ref) => {
-  const listRef = useRef<any>(null);
+const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview, onScroll }) => {
   const { token } = theme.useToken();
-
-  useImperativeHandle(ref, () => ({
-    scrollToBottom: () => {
-      // 使用 autoScroll 属性自动滚动
-    }
-  }));
 
   return (
     <div className={styles.messageListWrapper}>
       <Bubble.List
-        ref={listRef}
         className={styles.bubbleList}
         autoScroll
         onScroll={onScroll}
@@ -235,6 +223,6 @@ const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListProps>(({ 
       />
     </div>
   );
-});
+};
 
 export default React.memo(ChatMessageList);

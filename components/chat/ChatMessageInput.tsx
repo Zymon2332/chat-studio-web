@@ -314,6 +314,7 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
 
   return (
     <div className={styles.inputWrapper}>
+      <div className={styles.gradientOverlay} />
       <div className={styles.wrapper}>
         <Sender
           header={fileName || uploading ? senderHeader : undefined}

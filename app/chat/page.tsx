@@ -12,7 +12,7 @@ import {
 import SessionManageModal from "@/components/SessionManageModal";
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatMessageInput from "@/components/chat/ChatMessageInput";
-import ChatMessageList, { ChatMessage, ChatMessageListRef } from "@/components/chat/ChatMessageList";
+import ChatMessageList, { ChatMessage } from "@/components/chat/ChatMessageList";
 import ChatWelcome from "@/components/chat/ChatWelcome";
 import PreviewPanel from "@/components/chat/PreviewPanel";
 import { useUser } from "@/contexts/UserContext";
@@ -72,8 +72,6 @@ const ChatPage: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
-  
-  const chatListRef = useRef<ChatMessageListRef>(null);
 
   // 用于控制 Sender 输入框的值
   const [inputValue, setInputValue] = useState(""); 
@@ -284,7 +282,6 @@ const ChatPage: React.FC = () => {
                       <ChatWelcome userName={userInfo?.nickName} />
                     ) : (
                       <ChatMessageList
-                        ref={chatListRef}
                         messages={displayMessages}
                         isViewingHistory={!!selectedId}
                         onPreview={handlePreview}

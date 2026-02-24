@@ -6,7 +6,7 @@
   padding: 24px 20px;
   overflow: auto;
   width: 100%;
-  background: #f8f9fc;
+  background: var(--chat-bg-color, #f5f7fa);
 }
 
 .content {
