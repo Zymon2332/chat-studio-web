@@ -91,17 +91,12 @@ const KnowledgeBasePage: React.FC = () => {
 
   // 获取字典数据
   const fetchDictData = async () => {
-    try {
-      const [retrievalData, tagsData] = await Promise.all([
-        getDictItems('retrieval_mode'),
-        getKnowledgeBaseTags()
-      ]);
-      setRetrievalModes(retrievalData);
-      setAvailableTags(tagsData);
-    } catch (error) {
-      console.error('Failed to fetch dict data:', error);
-      message.error('获取字典数据失败');
-    }
+    const [retrievalData, tagsData] = await Promise.all([
+      getDictItems('retrieval_mode'),
+      getKnowledgeBaseTags()
+    ]);
+    setRetrievalModes(retrievalData);
+    setAvailableTags(tagsData);
   };
 
   // 页面加载时获取数据
@@ -148,9 +143,8 @@ const KnowledgeBasePage: React.FC = () => {
               await deleteKnowledgeBase(knowledgeBase.id);
               message.success('知识库删除成功');
               fetchKnowledgeBases(); // 重新获取数据
-            } catch (error) {
-              message.error('删除失败');
-              console.error('Failed to delete knowledge base:', error);
+            } catch {
+              // 错误已由拦截器统一处理，此处只需阻止后续代码执行
             }
           },
         });
@@ -206,70 +200,65 @@ const KnowledgeBasePage: React.FC = () => {
 
   // 编辑知识库
   const handleEditKnowledgeBase = async (id: number) => {
-    try {
-      // 获取字典数据
-      await fetchDictData();
-      
-      // 获取知识库详情
-      const knowledgeBaseInfo = await getKnowledgeBaseInfo(id);
+    // 获取字典数据
+    await fetchDictData();
+    
+    // 获取知识库详情
+    const knowledgeBaseInfo = await getKnowledgeBaseInfo(id);
 
-      setIsEditMode(true);
-      setEditingKnowledgeBase(knowledgeBaseInfo);
-      setCreateModalVisible(true);
+    setIsEditMode(true);
+    setEditingKnowledgeBase(knowledgeBaseInfo);
+    setCreateModalVisible(true);
 
-      // 回显数据到表单
-      const tagsForForm = knowledgeBaseInfo.tags?.map(tag => JSON.stringify(tag)) || [];
+    // 回显数据到表单
+    const tagsForForm = knowledgeBaseInfo.tags?.map(tag => JSON.stringify(tag)) || [];
 
-      // 构建表单数据，处理可能为空的字段
-      const formData = {
-        name: knowledgeBaseInfo.name,
-        description: knowledgeBaseInfo.description || '',
-        retrievalMode: knowledgeBaseInfo.retrievalMode,
-        topK: knowledgeBaseInfo.topK || 5,
-        embedMinScore: knowledgeBaseInfo.embedMinScore || 0.5,
-        rerankEnabled: knowledgeBaseInfo.rerankEnabled || false,
-        topN: knowledgeBaseInfo.topN || 5,
-        rerankMinScore: knowledgeBaseInfo.rerankMinScore || 0.35,
-        tags: tagsForForm
-      };
+    // 构建表单数据，处理可能为空的字段
+    const formData = {
+      name: knowledgeBaseInfo.name,
+      description: knowledgeBaseInfo.description || '',
+      retrievalMode: knowledgeBaseInfo.retrievalMode,
+      topK: knowledgeBaseInfo.topK || 5,
+      embedMinScore: knowledgeBaseInfo.embedMinScore || 0.5,
+      rerankEnabled: knowledgeBaseInfo.rerankEnabled || false,
+      topN: knowledgeBaseInfo.topN || 5,
+      rerankMinScore: knowledgeBaseInfo.rerankMinScore || 0.35,
+      tags: tagsForForm
+    };
 
-      form.setFieldsValue(formData);
-      setRerankEnabledState(knowledgeBaseInfo.rerankEnabled || false);
-    } catch (error) {
-      console.error('Failed to fetch knowledge base info:', error);
-      message.error('获取知识库信息失败');
-    }
+    form.setFieldsValue(formData);
+    setRerankEnabledState(knowledgeBaseInfo.rerankEnabled || false);
   };
 
   // 提交新增/编辑知识库
   const handleCreateSubmit = async () => {
+    const values = await form.validateFields();
+    setCreateLoading(true);
+    
+    // 处理标签数据格式
+    const processedTags = values.tags?.map((tag: string) => {
+      try {
+        // 尝试解析为已有标签
+        return JSON.parse(tag);
+      } catch {
+        // 如果解析失败，说明是新输入的标签
+        return { name: tag };
+      }
+    }) || [];
+    
+    const params: CreateKnowledgeBaseParams = {
+      name: values.name,
+      description: values.description,
+      retrievalMode: values.retrievalMode,
+      topK: values.topK,
+      rerankEnabled: values.rerankEnabled,
+      embedMinScore: values.embedMinScore,
+      topN: values.rerankEnabled ? values.topN : undefined,
+      rerankMinScore: values.rerankEnabled ? values.rerankMinScore : undefined,
+      tags: processedTags
+    };
+    
     try {
-      const values = await form.validateFields();
-      setCreateLoading(true);
-      
-      // 处理标签数据格式
-      const processedTags = values.tags?.map((tag: string) => {
-        try {
-          // 尝试解析为已有标签
-          return JSON.parse(tag);
-        } catch {
-          // 如果解析失败，说明是新输入的标签
-          return { name: tag };
-        }
-      }) || [];
-      
-      const params: CreateKnowledgeBaseParams = {
-        name: values.name,
-        description: values.description,
-        retrievalMode: values.retrievalMode,
-        topK: values.topK,
-        rerankEnabled: values.rerankEnabled,
-        embedMinScore: values.embedMinScore,
-        topN: values.rerankEnabled ? values.topN : undefined,
-        rerankMinScore: values.rerankEnabled ? values.rerankMinScore : undefined,
-        tags: processedTags
-      };
-      
       if (isEditMode && editingKnowledgeBase) {
         await updateKnowledgeBase(editingKnowledgeBase.id, params);
         message.success('知识库更新成功');
@@ -284,9 +273,8 @@ const KnowledgeBasePage: React.FC = () => {
       setEditingKnowledgeBase(null);
       setRerankEnabledState(false);
       fetchKnowledgeBases(); // 刷新列表
-    } catch (error) {
-      console.error('Failed to save knowledge base:', error);
-      message.error(isEditMode ? '更新知识库失败' : '创建知识库失败');
+    } catch {
+      // 错误已由拦截器统一处理
     } finally {
       setCreateLoading(false);
     }

@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { message as antdMessage } from "antd";
 import { useXChat, MessageInfo } from "@ant-design/x-sdk";
 import { ChatMessage } from "@/components/chat/ChatMessageList";
 import {
@@ -58,10 +57,7 @@ export const useChat = ({
           if (onSessionCreated) {
             onSessionCreated(currentSessionId);
           }
-        } catch (error: unknown) {
-          const errorMessage =
-            error instanceof Error ? error.message : "未知错误";
-          antdMessage.error("创建会话失败: " + errorMessage);
+        } catch (error) {
           setSendingLoading(false);
           return;
         }
@@ -186,47 +182,6 @@ export const useChat = ({
             return msg;
           });
         });
-      } catch (error: unknown) {
-        if (error instanceof Error && error.name === "AbortError") {
-          // Handle cancellation: keep current content, remove loading
-          setMessages((prevMessages) => {
-            return prevMessages.map((msg) => {
-              if (msg.id === aiMsgId) {
-                return {
-                  ...msg,
-                  status: "success",
-                  message: {
-                    ...msg.message,
-                    isLoading: false,
-                  },
-                };
-              }
-              return msg;
-            });
-          });
-        } else {
-          console.error("消息发送失败:", error);
-          const errorMessage =
-            error instanceof Error ? error.message : "未知错误";
-          antdMessage.error("消息发送失败: " + errorMessage);
-
-          setMessages((prevMessages) => {
-            return prevMessages.map((msg) => {
-              if (msg.id === aiMsgId) {
-                return {
-                  ...msg,
-                  status: "error",
-                  message: {
-                    ...msg.message,
-                    isLoading: false,
-                    content: "抱歉，消息发送失败，请稍后重试。",
-                  },
-                };
-              }
-              return msg;
-            });
-          });
-        }
       } finally {
         setSendingLoading(false);
         setAbortController(null);

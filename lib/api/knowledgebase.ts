@@ -76,7 +76,7 @@ export const getKnowledgeBaseInfo = async (id: number): Promise<KnowledgeBase> =
 
 // 删除知识库
 export const deleteKnowledgeBase = async (id: number): Promise<void> => {
-  await request.delete(`/kb/${id}`);
+  await request.delete(`/kb/delete/${id}`);
 };
 
 export const getKnowledgeBaseTags = (): Promise<TagItem[]> => {

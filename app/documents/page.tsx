@@ -138,8 +138,8 @@ const DocumentsPageContent: React.FC = () => {
           await deleteDocument(doc.docId);
           message.success('文档删除成功');
           fetchDocuments(currentPage, searchValue);
-        } catch (error) {
-          message.error(error instanceof Error ? error.message : '删除失败');
+        } catch {
+          // 错误已由拦截器统一处理
         }
       },
     });

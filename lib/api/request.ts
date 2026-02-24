@@ -1,9 +1,10 @@
 import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { message } from 'antd';
 
-// 创建axios实例
+// 创建 axios 实例
 const request = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -70,11 +71,12 @@ request.interceptors.response.use(
       
       // 检查响应是否成功
       if (success === false || (code && code !== 'SUCCESS')) {
-        // 可以根据业务需要处理错误情况
+        // 统一弹出错误提示
+        message.error(msg || '请求失败');
         return Promise.reject(new Error(msg || '请求失败'));
       }
       
-      // 返回data字段
+      // 返回 data 字段
       return data;
     }
     
@@ -82,19 +84,46 @@ request.interceptors.response.use(
     return response.data;
   },
   (error: AxiosError) => {
-    // 对响应错误做点什么
-    if (error.response?.status === 401) {
-      // 处理未授权错误
-      // 例如：清除token并重定向到登录页面
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userInfo');
+    // 统一处理 HTTP 错误
+    let errorMessage = '网络错误，请稍后重试';
+    
+    if (error.response) {
+      // 服务器返回错误响应
+      const { status, data } = error.response;
+      
+      switch (status) {
+        case 401:
+          // 未授权，清除 token 并提示
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userInfo');
+          }
+          errorMessage = '登录已过期，请重新登录';
+          break;
+        case 403:
+          errorMessage = '无权访问此资源';
+          break;
+        case 404:
+          errorMessage = '请求的资源不存在';
+          break;
+        case 500:
+          errorMessage = '服务器错误，请稍后重试';
+          break;
+        default:
+          // 尝试从响应数据中获取错误消息
+          const responseData = data as any;
+          errorMessage = responseData?.msg || responseData?.message || `请求失败 (${status})`;
       }
-      // 返回更明确的错误信息
-      return Promise.reject(new Error('401 未授权，请先登录'));
+    } else if (error.code === 'ECONNABORTED') {
+      errorMessage = '请求超时，请稍后重试';
+    } else if (error.code === 'ERR_NETWORK') {
+      errorMessage = '网络错误，请检查网络连接';
     }
     
-    return Promise.reject(error);
+    // 统一弹出错误提示
+    message.error(errorMessage);
+    
+    return Promise.reject(new Error(errorMessage));
   }
 );
 

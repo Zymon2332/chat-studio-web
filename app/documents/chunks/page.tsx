@@ -107,9 +107,8 @@ const DocumentChunksContent: React.FC = () => {
       message.success('更新分块内容成功');
       setIsDrawerEditing(false);
       lastSavedContentRef.current = editContent;
-    } catch (error) {
-      message.error('更新分块内容失败');
-      console.error(error);
+    } finally {
+      setIsDrawerEditing(false);
     }
   };
 
@@ -179,9 +178,6 @@ const DocumentChunksContent: React.FC = () => {
         pageSize: response.size,
         total: response.total
       });
-    } catch (error) {
-      message.error('获取文档分块失败');
-      console.error('获取文档分块失败:', error);
     } finally {
       setLoading(false);
     }
@@ -222,8 +218,6 @@ const DocumentChunksContent: React.FC = () => {
         c.chunkId === chunk.chunkId ? { ...c, enabled: !checked } : c
       );
       setChunks(revertedChunks);
-      message.error('操作失败');
-      console.error(error);
     }
   };
 
