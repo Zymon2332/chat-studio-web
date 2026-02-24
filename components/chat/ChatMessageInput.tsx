@@ -7,10 +7,9 @@ import {
   FilePdfOutlined,
   VideoCameraOutlined,
   AudioOutlined,
-  SendOutlined,
-  LoadingOutlined,
   RobotOutlined,
   DownOutlined,
+  SlackCircleFilled
 } from "@ant-design/icons";
 import { Sender, Attachments, AttachmentsProps } from "@ant-design/x";
 import { uploadFile } from "@/lib/api/upload";
@@ -339,10 +338,9 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
               color: 'rgba(0, 0, 0, 0.85)',
             },
           }}
-          submitType="enter"
           suffix={false}
+          submitType="enter"
           onSubmit={(val) => {
-            console.log('onSubmit called with:', val, 'loading:', loading, 'uploading:', uploading, 'value:', value);
             if (loading || uploading) return;
             if (!val.trim() && !uploadId) return;
 
@@ -351,74 +349,71 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
             clearUpload();
           }}
           onCancel={onCancel}
-          footer={() => (
-          <div className={styles.footer}>
-            <div className={styles.footerLeft}>
-              <Dropdown
-                menu={{ items: uploadItems }}
-                placement="topLeft"
-                trigger={["click"]}
-              >
-                <button className={styles.iconButton}>
-                  <PlusOutlined style={{ fontSize: 16 }} />
-                </button>
-              </Dropdown>
+          footer={(_, { components }) => {
+            const { SendButton, LoadingButton } = components;
+            return (
+              <div className={styles.footer}>
+                <div className={styles.footerLeft}>
+                  <Dropdown
+                    menu={{ items: uploadItems }}
+                    placement="topLeft"
+                    trigger={["click"]}
+                  >
+                    <button className={styles.iconButton} aria-label="上传文件">
+                      <PlusOutlined style={{ fontSize: 16 }} />
+                    </button>
+                  </Dropdown>
 
-              <div className={styles.modelSelectorDivider} />
+                  <div className={styles.modelSelectorDivider} />
 
-              <Dropdown
-                menu={{ items: menuItems }}
-                trigger={["click"]}
-                placement="topLeft"
-                open={modelDropdownOpen}
-                onOpenChange={(open) => {
-                  setModelDropdownOpen(open);
-                  if (open) {
-                    setSearchValue("");
-                  }
-                }}
-                popupRender={(menu) => (
-                  <div className={styles.modelDropdownPopup}>
-                    <div className={styles.modelSearchBox}>
-                      <Input
-                        placeholder="搜索模型..."
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        allowClear
-                        variant="borderless"
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {React.isValidElement(menu) ? React.cloneElement(menu as React.ReactElement<any>) : menu}
-                  </div>
+                  <Dropdown
+                    menu={{ items: menuItems }}
+                    trigger={["click"]}
+                    placement="topLeft"
+                    open={modelDropdownOpen}
+                    onOpenChange={(open) => {
+                      setModelDropdownOpen(open);
+                      if (open) {
+                        setSearchValue("");
+                      }
+                    }}
+                    popupRender={(menu) => (
+                      <div className={styles.modelDropdownPopup}>
+                        <div className={styles.modelSearchBox}>
+                          <Input
+                            placeholder="搜索模型..."
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            allowClear
+                            variant="borderless"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        {React.isValidElement(menu) ? React.cloneElement(menu as React.ReactElement<any>) : menu}
+                      </div>
+                    )}
+                  >
+                    <button className={styles.modelButton} aria-label="选择模型">
+                      {displayIcon ? (
+                        <img src={displayIcon} alt="icon" className={styles.modelButtonIcon} />
+                      ) : (
+                        <RobotOutlined className={styles.modelButtonIcon} />
+                      )}
+                      <span className={styles.modelButtonText}>{displayModelName}</span>
+                      <DownOutlined className={styles.modelButtonArrow} />
+                    </button>
+                  </Dropdown>
+                </div>
+
+                {loading ? (
+                  <LoadingButton type="primary" />
+                ) : (
+                  <SendButton type="primary" icon={<SlackCircleFilled />} disabled={!canSend} />
                 )}
-              >
-                <button className={styles.modelButton}>
-                  {displayIcon ? (
-                    <img src={displayIcon} alt="icon" className={styles.modelButtonIcon} />
-                  ) : (
-                    <RobotOutlined className={styles.modelButtonIcon} />
-                  )}
-                  <span className={styles.modelButtonText}>{displayModelName}</span>
-                  <DownOutlined className={styles.modelButtonArrow} />
-                </button>
-              </Dropdown>
-            </div>
-
-            <button
-              onClick={handleSend}
-              disabled={!canSend}
-              className={styles.sendButton}
-            >
-              {loading ? (
-                <LoadingOutlined style={{ fontSize: 16 }} />
-              ) : (
-                <SendOutlined style={{ fontSize: 14 }} />
-              )}
-            </button>
-          </div>
-        )}
+              </div>
+            );
+          }}
       />
       </div>
     </div>
