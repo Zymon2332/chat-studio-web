@@ -8,6 +8,7 @@ import {
   createSession,
 } from "@/lib/api/conversations";
 import { ModelListItem, DefaultModel } from "@/lib/api/models";
+import { parseToolRequests, parseToolResponses, removeToolTags } from "@/lib/utils/toolUtils";
 
 interface UseChatProps {
   initialSessionId: string | null;
@@ -164,6 +165,11 @@ export const useChat = ({
             fullThinking += chunkThinkingDelta;
             isFirstUpdate = false;
 
+            // 解析工具调用和结果
+            const toolRequests = parseToolRequests(fullContent);
+            const toolResults = parseToolResponses(fullContent);
+            const cleanContent = removeToolTags(fullContent);
+
             setMessages((prevMessages) => {
               return prevMessages.map((msg) => {
                 if (msg.id === aiMsgId) {
@@ -173,8 +179,10 @@ export const useChat = ({
                     message: {
                       ...msg.message,
                       content: fullContent,
-                      displayContent: fullContent,
+                      displayContent: cleanContent,
                       thinking: fullThinking || undefined,
+                      toolRequests: toolRequests.length > 0 ? toolRequests : undefined,
+                      toolResults: toolResults.length > 0 ? toolResults : undefined,
                       isLoading: false,
                     },
                   };
@@ -184,6 +192,11 @@ export const useChat = ({
             });
           }
         }
+
+        // 解析最终的工具调用和结果
+        const finalToolRequests = parseToolRequests(fullContent);
+        const finalToolResults = parseToolResponses(fullContent);
+        const finalCleanContent = removeToolTags(fullContent);
 
         setMessages((prevMessages) => {
           return prevMessages.map((msg) => {
@@ -195,8 +208,10 @@ export const useChat = ({
                   ...msg.message,
                   isLoading: false,
                   content: fullContent,
-                  displayContent: fullContent,
+                  displayContent: finalCleanContent,
                   thinking: fullThinking || undefined,
+                  toolRequests: finalToolRequests.length > 0 ? finalToolRequests : undefined,
+                  toolResults: finalToolResults.length > 0 ? finalToolResults : undefined,
                 },
               };
             }

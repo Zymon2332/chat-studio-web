@@ -9,6 +9,7 @@ import {
   getSessionMessages,
   SessionMessage,
   ToolRequest,
+  ToolResponse,
 } from "@/lib/api/conversations";
 import SessionManageModal from "@/components/SessionManageModal";
 import ChatSidebar from "@/components/chat/ChatSidebar";
@@ -27,31 +28,44 @@ import {
 import { loginEventManager } from "@/lib/events/loginEvents";
 import { modelEventManager } from "@/lib/events/modelEvents";
 import { useChat } from "@/lib/hooks/useChat";
+import { removeToolTags } from "@/lib/utils/toolUtils";
 
 import styles from "./page.module.css";
 
 // 将 API 消息转换为组件消息格式
 const convertSessionMessageToChatMessage = (
-  sessionMessage: SessionMessage
+  sessionMessage: SessionMessage,
+  toolResultMessages?: SessionMessage[]
 ): ChatMessage => {
   // 根据 messageType 判断角色
   const role = sessionMessage.messageType === 'USER' ? 'user' : 'assistant';
-  
+
   // USER 消息：从 contents[0].text 获取内容
   // AI 消息：从 text 获取内容
-  const content = sessionMessage.messageType === 'USER' 
+  const content = sessionMessage.messageType === 'USER'
     ? sessionMessage.contents?.[0]?.text || ''
     : sessionMessage.text || '';
-  
+
   // 从 toolRequests 提取工具名称列表
   const toolNames = sessionMessage.toolRequests?.map(tr => tr.name) || [];
-  
+
+  // 匹配工具调用结果
+  const matchedToolResults: ToolResponse[] = toolResultMessages?.filter(
+    tr => sessionMessage.toolRequests?.some(req => req.id === tr.toolResponse?.id)
+  ).map(tr => tr.toolResponse!) || [];
+
+  // 清理内容，移除<tool>和<result>标签
+  const displayContent = removeToolTags(content);
+
   const chatMessage: ChatMessage = {
     content,
+    displayContent: displayContent || undefined,
     role,
     avatar: role === 'user' ? '👤' : '🤖',
     thinking: sessionMessage.thinking,
     toolNames: toolNames.length > 0 ? toolNames : undefined,
+    toolRequests: sessionMessage.toolRequests,
+    toolResults: matchedToolResults.length > 0 ? matchedToolResults : undefined,
     dateTime: sessionMessage.dateTime,
   };
 
@@ -145,7 +159,12 @@ const ChatPage: React.FC = () => {
     try {
       const sessionMessages = await getSessionMessages(sessionId);
       
-      // 过滤掉 TOOL_EXECUTION_RESULT 类型
+      // 收集所有 TOOL_EXECUTION_RESULT 类型的消息
+      const toolResultMessages = sessionMessages.filter(
+        msg => msg.messageType === 'TOOL_EXECUTION_RESULT'
+      );
+
+      // 过滤掉 TOOL_EXECUTION_RESULT 类型，只保留 USER 和 AI 消息
       const filteredMessages = sessionMessages.filter(
         msg => msg.messageType !== 'TOOL_EXECUTION_RESULT'
       );
@@ -206,12 +225,12 @@ const ChatPage: React.FC = () => {
       // useXChat 需要 MessageInfo<T> 格式
       const messageInfos = processedMessages.map((msg, index) => ({
         id: index.toString(),
-        message: convertSessionMessageToChatMessage(msg),
+        message: convertSessionMessageToChatMessage(msg, toolResultMessages),
         status: 'success' as const
       }));
-      
+
       setMessages(messageInfos);
-      return processedMessages.map(convertSessionMessageToChatMessage);
+      return processedMessages.map(m => convertSessionMessageToChatMessage(m, toolResultMessages));
     } catch (error) {
       console.error("加载会话消息失败:", error);
       throw error;

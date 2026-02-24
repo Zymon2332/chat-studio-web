@@ -2,6 +2,8 @@
  * 工具调用内容处理工具函数
  */
 
+import type { ToolRequest, ToolResponse } from '@/lib/api/conversations';
+
 export interface ToolContent {
   toolText: string;
   remainingContent: string;
@@ -112,4 +114,62 @@ export function incrementalParseTools(
   // 如果有新工具，返回完整的当前工具列表
   // 这样可以确保工具顺序和完整性
   return currentTools;
+}
+
+/**
+ * 从内容中提取并解析 ToolRequest
+ * @param content 原始内容
+ * @returns ToolRequest 列表
+ */
+export function parseToolRequests(content: string): ToolRequest[] {
+  const toolRegex = /<tool>([\s\S]*?)<\/tool>/g;
+  const requests: ToolRequest[] = [];
+  let match;
+  
+  while ((match = toolRegex.exec(content)) !== null) {
+    try {
+      const jsonStr = match[1].trim();
+      const request = JSON.parse(jsonStr) as ToolRequest;
+      requests.push(request);
+    } catch (e) {
+      // JSON 解析失败，跳过
+    }
+  }
+  
+  return requests;
+}
+
+/**
+ * 从内容中提取并解析 ToolResponse
+ * @param content 原始内容
+ * @returns ToolResponse 列表
+ */
+export function parseToolResponses(content: string): ToolResponse[] {
+  const resultRegex = /<result>([\s\S]*?)<\/result>/g;
+  const responses: ToolResponse[] = [];
+  let match;
+  
+  while ((match = resultRegex.exec(content)) !== null) {
+    try {
+      const jsonStr = match[1].trim();
+      const response = JSON.parse(jsonStr) as ToolResponse;
+      responses.push(response);
+    } catch (e) {
+      // JSON 解析失败，跳过
+    }
+  }
+  
+  return responses;
+}
+
+/**
+ * 移除<tool>和<result>标签后的纯文本内容
+ * @param content 原始内容
+ * @returns 清理后的内容
+ */
+export function removeToolTags(content: string): string {
+  return content
+    .replace(/<tool>[\s\S]*?<\/tool>/g, '')
+    .replace(/<result>[\s\S]*?<\/result>/g, '')
+    .trim();
 }

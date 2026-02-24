@@ -113,3 +113,39 @@
   font-size: 12px;
   color: rgba(0, 0, 0, 0.45);
 }
+
+/* Thinking 容器样式 - 与 ThoughtChain 间距 */
+.thinkingContainer {
+  margin-bottom: 16px;
+}
+
+/* ThoughtChain 容器样式 */
+.thoughtChainContainer {
+  margin-bottom: 16px;
+}
+
+/* ThoughtChain 节点间距调整 */
+.thoughtChainContainer :global(.ant-thought-chain-item) {
+  margin-bottom: 12px;
+}
+
+.thoughtChainContainer :global(.ant-thought-chain-item:last-child) {
+  margin-bottom: 0;
+}
+
+/* 工具调用结果样式 - 简约扁平化 */
+.toolResult {
+  padding: 8px 0;
+}
+
+.toolResultSuccess {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.toolResultError {
+  color: #ff4d4f;
+  font-size: 13px;
+  line-height: 1.5;
+}

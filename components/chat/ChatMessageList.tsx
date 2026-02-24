@@ -3,11 +3,12 @@ import React from 'react';
 
 import { renderMarkdown } from '@/components/MarkdownRenderer';
 import { extractThinkingContent } from '@/lib/utils/thinkingUtils';
-import { extractAllToolNames, extractToolContent } from '@/lib/utils/toolUtils';
 import {
     LoadingOutlined, ToolOutlined, FilePdfOutlined, VideoCameraOutlined, AudioOutlined
 } from '@ant-design/icons';
-import { Actions, Bubble, Sources, Think } from '@ant-design/x';
+import { Actions, Bubble, ThoughtChain, Think } from '@ant-design/x';
+import type { ThoughtChainProps } from '@ant-design/x';
+import type { ToolRequest, ToolResponse } from '@/lib/api/conversations';
 
 import styles from './ChatMessageList.module.css';
 
@@ -22,7 +23,9 @@ export interface ChatMessage {
   displayContent?: string; // 用于打字机效果的显示内容
   thinking?: string; // 深度思考内容
   thinkingDuration?: number; // 深度思考耗时，单位为秒
-  toolNames?: string[]; // 调用的工具名称列表
+  toolNames?: string[]; // 调用的工具名称列表（兼容旧格式）
+  toolRequests?: ToolRequest[]; // 工具调用请求列表
+  toolResults?: ToolResponse[]; // 工具调用结果列表
   contentType?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF'; // 文件类型
   fileUrl?: string; // 文件链接
   dateTime?: string; // 消息时间
@@ -139,49 +142,64 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
                 remainingContent = extracted.remainingContent;
               }
 
-              // 处理工具调用内容
-              let toolNamesFromContent: string[] = [];
-              let finalContent = remainingContent;
+              // 构建 ThoughtChain 的 items（仅用于工具调用）
+              const thoughtChainItems: ThoughtChainProps['items'] = [];
 
-              // 使用新的函数直接提取所有工具名称
-              const extractedToolNames = extractAllToolNames(remainingContent);
-              if (extractedToolNames.length > 0) {
-                // 直接使用提取的工具名称
-                toolNamesFromContent = extractedToolNames;
-                // 移除工具标签后的内容
-                const toolExtracted = extractToolContent(remainingContent);
-                finalContent = toolExtracted.remainingContent;
+              // 添加工具调用节点
+              if (msg.toolRequests && msg.toolRequests.length > 0) {
+                msg.toolRequests.forEach((toolReq) => {
+                  // 查找对应的工具调用结果
+                  const toolResult = msg.toolResults?.find(
+                    (result) => result.id === toolReq.id
+                  );
+
+                  // 工具执行失败时不显示结果内容，仅更新状态
+                  const toolContent = toolResult && !toolResult.isError ? (
+                    <div className={styles.toolResult}>
+                      <div className={styles.toolResultSuccess}>
+                        {toolResult.text || '执行成功'}
+                      </div>
+                    </div>
+                  ) : null;
+
+                  thoughtChainItems.push({
+                    key: `tool-${toolReq.id}`,
+                    title: toolReq.name,
+                    icon: <ToolOutlined />,
+                    status: toolResult
+                      ? toolResult.isError
+                        ? 'error'
+                        : 'success'
+                      : 'loading',
+                    collapsible: true,
+                    content: toolContent,
+                  });
+                });
               }
-
-              // 合并工具名称：优先使用从内容中提取的，然后是字段中的
-              const allToolNames = [
-                ...toolNamesFromContent,
-                ...(msg.toolNames || []),
-              ].filter((name, index, arr) => arr.indexOf(name) === index); // 去重
 
               return (
                 <div>
                   {/* 深度思考区域 */}
                   {thinkingText && (
-                    <Think blink defaultExpanded={false} title={"深度思考"}>
-                      {renderMarkdown(thinkingText)}
-                    </Think>
+                    <div className={styles.thinkingContainer}>
+                      <Think blink defaultExpanded={false} title="深度思考">
+                        {renderMarkdown(thinkingText)}
+                      </Think>
+                    </div>
                   )}
 
-                  {/* 工具调用显示 */}
-                  {allToolNames.length > 0 && (
-                    <Sources
-                      items={allToolNames.map((name) => ({
-                        key: name,
-                        title: name,
-                        icon: <ToolOutlined />,
-                      }))}
-                      title="工具调用"
-                    />
+                  {/* ThoughtChain 工具调用链式展示 */}
+                  {thoughtChainItems.length > 0 && (
+                    <div className={styles.thoughtChainContainer}>
+                      <ThoughtChain
+                        items={thoughtChainItems}
+                        defaultExpandedKeys={[]}
+                      />
+                    </div>
                   )}
 
                   {/* 消息内容 */}
-                  {finalContent && renderMarkdown(finalContent, onPreview)}
+                  {msg.displayContent && renderMarkdown(msg.displayContent, onPreview)}
                 </div>
               );
             },
