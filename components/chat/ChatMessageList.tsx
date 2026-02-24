@@ -3,12 +3,12 @@ import React from 'react';
 
 import { renderMarkdown } from '@/components/MarkdownRenderer';
 import { extractThinkingContent } from '@/lib/utils/thinkingUtils';
+import { parseToolRequests, parseToolResponses, removeAllTags } from '@/lib/utils/toolUtils';
+import type { ToolRequest, ToolResponse } from '@/lib/api/conversations';
 import {
     LoadingOutlined, ToolOutlined, FilePdfOutlined, VideoCameraOutlined, AudioOutlined
 } from '@ant-design/icons';
 import { Actions, Bubble, ThoughtChain, Think } from '@ant-design/x';
-import type { ThoughtChainProps } from '@ant-design/x';
-import type { ToolRequest, ToolResponse } from '@/lib/api/conversations';
 
 import styles from './ChatMessageList.module.css';
 
@@ -20,12 +20,9 @@ export interface ChatMessage {
   role: "user" | "assistant";
   avatar?: string;
   isLoading?: boolean;
-  displayContent?: string; // 用于打字机效果的显示内容
-  thinking?: string; // 深度思考内容
-  thinkingDuration?: number; // 深度思考耗时，单位为秒
-  toolNames?: string[]; // 调用的工具名称列表（兼容旧格式）
-  toolRequests?: ToolRequest[]; // 工具调用请求列表
-  toolResults?: ToolResponse[]; // 工具调用结果列表
+  thinking?: string; // 深度思考内容（历史消息）
+  toolRequests?: ToolRequest[]; // 工具调用请求（历史消息）
+  toolResults?: ToolResponse[]; // 工具调用结果（历史消息）
   contentType?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF'; // 文件类型
   fileUrl?: string; // 文件链接
   dateTime?: string; // 消息时间
@@ -108,7 +105,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
               return (
                 <div className={styles.messageContent}>
                   {renderFileContent()}
-                  {msg.displayContent || msg.content}
+                  {msg.content}
                 </div>
               );
             },
@@ -129,53 +126,47 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
             contentRender: (content: any) => {
               const msg = content as ChatMessage & { messageIndex: number };
 
-              // 优先使用thinking字段，如果没有则从content中提取
-              let thinkingText = msg.thinking;
-              let remainingContent = msg.displayContent || msg.content;
+              // 优先使用字段值（历史消息），如果没有则从 content 中解析（流式消息）
+              const thinkingText = msg.thinking || extractThinkingContent(msg.content).thinkingText;
+              
+              // 工具调用：优先使用字段值，否则从 content 解析
+              const toolRequests = msg.toolRequests || parseToolRequests(msg.content);
+              const toolResults = msg.toolResults || parseToolResponses(msg.content);
 
-              // 如果没有thinking字段，则尝试从content中提取
-              if (!thinkingText) {
-                const extracted = extractThinkingContent(
-                  msg.displayContent || msg.content
+              // 构建 ThoughtChain items
+              const thoughtChainItems = toolRequests.map((toolReq) => {
+                const toolResult = toolResults.find(
+                  (result) => result.id === toolReq.id
                 );
-                thinkingText = extracted.thinkingText;
-                remainingContent = extracted.remainingContent;
-              }
 
-              // 构建 ThoughtChain 的 items（仅用于工具调用）
-              const thoughtChainItems: ThoughtChainProps['items'] = [];
-
-              // 添加工具调用节点
-              if (msg.toolRequests && msg.toolRequests.length > 0) {
-                msg.toolRequests.forEach((toolReq) => {
-                  // 查找对应的工具调用结果
-                  const toolResult = msg.toolResults?.find(
-                    (result) => result.id === toolReq.id
-                  );
-
-                  // 工具执行失败时不显示结果内容，仅更新状态
-                  const toolContent = toolResult && !toolResult.isError ? (
-                    <div className={styles.toolResult}>
-                      <div className={styles.toolResultSuccess}>
-                        {toolResult.text || '执行成功'}
-                      </div>
+                const toolContent = toolResult && !toolResult.isError ? (
+                  <div className={styles.toolResult}>
+                    <div className={styles.toolResultSuccess}>
+                      {toolResult.text || '执行成功'}
                     </div>
-                  ) : null;
+                  </div>
+                ) : null;
 
-                  thoughtChainItems.push({
-                    key: `tool-${toolReq.id}`,
-                    title: toolReq.name,
-                    icon: <ToolOutlined />,
-                    status: toolResult
-                      ? toolResult.isError
-                        ? 'error'
-                        : 'success'
-                      : 'loading',
-                    collapsible: true,
-                    content: toolContent,
-                  });
-                });
-              }
+                return {
+                  key: `tool-${toolReq.id}`,
+                  title: toolReq.name,
+                  icon: <ToolOutlined />,
+                  status: (toolResult
+                    ? toolResult.isError
+                      ? 'error'
+                      : 'success'
+                    : 'loading') as 'loading' | 'success' | 'error',
+                  collapsible: true,
+                  content: toolContent,
+                };
+              });
+
+              // 清理显示内容：如果有 thinking 或 toolRequests 说明是历史消息，content 已经是清理过的
+              // 否则需要从 content 中移除所有标签（流式消息）
+              const hasHistoryFields = msg.thinking || msg.toolRequests || msg.toolResults;
+              const displayContent = hasHistoryFields
+                ? msg.content
+                : removeAllTags(msg.content);
 
               return (
                 <div>
@@ -190,16 +181,14 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
 
                   {/* ThoughtChain 工具调用链式展示 */}
                   {thoughtChainItems.length > 0 && (
-                    <div className={styles.thoughtChainContainer}>
-                      <ThoughtChain
-                        items={thoughtChainItems}
-                        defaultExpandedKeys={[]}
-                      />
-                    </div>
+                    <ThoughtChain
+                      items={thoughtChainItems}
+                      defaultExpandedKeys={[]}
+                    />
                   )}
 
                   {/* 消息内容 */}
-                  {msg.displayContent && renderMarkdown(msg.displayContent, onPreview)}
+                  {displayContent && renderMarkdown(displayContent, onPreview)}
                 </div>
               );
             },

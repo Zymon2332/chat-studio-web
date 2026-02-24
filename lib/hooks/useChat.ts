@@ -8,7 +8,6 @@ import {
   createSession,
 } from "@/lib/api/conversations";
 import { ModelListItem, DefaultModel } from "@/lib/api/models";
-import { parseToolRequests, parseToolResponses, removeToolTags } from "@/lib/utils/toolUtils";
 
 interface UseChatProps {
   initialSessionId: string | null;
@@ -90,7 +89,6 @@ export const useChat = ({
           role: "assistant",
           avatar: "🤖",
           isLoading: true,
-          displayContent: "",
         },
         status: "loading",
       };
@@ -114,9 +112,7 @@ export const useChat = ({
         const reader = await chatStream(requestData, controller.signal);
 
         let fullContent = "";
-        let fullThinking = "";
         let buffer = "";
-        let isFirstUpdate = true;
 
         const decoder = new TextDecoder();
 
@@ -133,7 +129,6 @@ export const useChat = ({
           buffer = lines.pop() || "";
 
           let chunkContentDelta = "";
-          let chunkThinkingDelta = "";
           let hasUpdates = false;
 
           for (const line of lines) {
@@ -143,14 +138,7 @@ export const useChat = ({
 
             try {
               const jsonData = JSON.parse(data);
-              if (jsonData.text) {
-                chunkContentDelta += jsonData.text;
-                hasUpdates = true;
-              } else if (jsonData.thinking) {
-                chunkThinkingDelta += jsonData.thinking;
-                hasUpdates = true;
-              } else if (jsonData.content) {
-                // 兼容旧格式
+              if (jsonData.content) {
                 chunkContentDelta += jsonData.content;
                 hasUpdates = true;
               }
@@ -160,15 +148,8 @@ export const useChat = ({
             }
           }
 
-          if (hasUpdates || isFirstUpdate) {
+          if (hasUpdates) {
             fullContent += chunkContentDelta;
-            fullThinking += chunkThinkingDelta;
-            isFirstUpdate = false;
-
-            // 解析工具调用和结果
-            const toolRequests = parseToolRequests(fullContent);
-            const toolResults = parseToolResponses(fullContent);
-            const cleanContent = removeToolTags(fullContent);
 
             setMessages((prevMessages) => {
               return prevMessages.map((msg) => {
@@ -179,10 +160,6 @@ export const useChat = ({
                     message: {
                       ...msg.message,
                       content: fullContent,
-                      displayContent: cleanContent,
-                      thinking: fullThinking || undefined,
-                      toolRequests: toolRequests.length > 0 ? toolRequests : undefined,
-                      toolResults: toolResults.length > 0 ? toolResults : undefined,
                       isLoading: false,
                     },
                   };
@@ -192,11 +169,6 @@ export const useChat = ({
             });
           }
         }
-
-        // 解析最终的工具调用和结果
-        const finalToolRequests = parseToolRequests(fullContent);
-        const finalToolResults = parseToolResponses(fullContent);
-        const finalCleanContent = removeToolTags(fullContent);
 
         setMessages((prevMessages) => {
           return prevMessages.map((msg) => {
@@ -208,10 +180,6 @@ export const useChat = ({
                   ...msg.message,
                   isLoading: false,
                   content: fullContent,
-                  displayContent: finalCleanContent,
-                  thinking: fullThinking || undefined,
-                  toolRequests: finalToolRequests.length > 0 ? finalToolRequests : undefined,
-                  toolResults: finalToolResults.length > 0 ? finalToolResults : undefined,
                 },
               };
             }

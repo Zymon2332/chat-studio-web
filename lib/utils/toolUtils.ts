@@ -173,3 +173,19 @@ export function removeToolTags(content: string): string {
     .replace(/<result>[\s\S]*?<\/result>/g, '')
     .trim();
 }
+
+/**
+ * 移除所有特殊标签（<tool>、<result>、<think>
+</think>
+
+）后的纯文本内容
+ * @param content 原始内容
+ * @returns 清理后的内容
+ */
+export function removeAllTags(content: string): string {
+  return content
+    .replace(/<tool>[\s\S]*?<\/tool>/g, '')
+    .replace(/<result>[\s\S]*?<\/result>/g, '')
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .trim();
+}

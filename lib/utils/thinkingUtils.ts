@@ -47,3 +47,12 @@ export function extractThinkingContent(content: string): ThinkingContent {
 export function hasThinkingContent(content: string): boolean {
   return /<think>[\s\S]*?<\/think>/.test(content);
 }
+
+/**
+ * 移除内容中的 <think></think> 标签
+ * @param content 原始内容
+ * @returns 移除标签后的内容
+ */
+export function removeThinkingTags(content: string): string {
+  return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+}

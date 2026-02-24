@@ -28,7 +28,6 @@ import {
 import { loginEventManager } from "@/lib/events/loginEvents";
 import { modelEventManager } from "@/lib/events/modelEvents";
 import { useChat } from "@/lib/hooks/useChat";
-import { removeToolTags } from "@/lib/utils/toolUtils";
 
 import styles from "./page.module.css";
 
@@ -46,24 +45,16 @@ const convertSessionMessageToChatMessage = (
     ? sessionMessage.contents?.[0]?.text || ''
     : sessionMessage.text || '';
 
-  // 从 toolRequests 提取工具名称列表
-  const toolNames = sessionMessage.toolRequests?.map(tr => tr.name) || [];
-
-  // 匹配工具调用结果
+  // 匹配工具调用结果（历史消息格式）
   const matchedToolResults: ToolResponse[] = toolResultMessages?.filter(
     tr => sessionMessage.toolRequests?.some(req => req.id === tr.toolResponse?.id)
   ).map(tr => tr.toolResponse!) || [];
 
-  // 清理内容，移除<tool>和<result>标签
-  const displayContent = removeToolTags(content);
-
   const chatMessage: ChatMessage = {
     content,
-    displayContent: displayContent || undefined,
     role,
     avatar: role === 'user' ? '👤' : '🤖',
     thinking: sessionMessage.thinking,
-    toolNames: toolNames.length > 0 ? toolNames : undefined,
     toolRequests: sessionMessage.toolRequests,
     toolResults: matchedToolResults.length > 0 ? matchedToolResults : undefined,
     dateTime: sessionMessage.dateTime,
@@ -158,7 +149,7 @@ const ChatPage: React.FC = () => {
   const loadSessionMessages = async (sessionId: string) => {
     try {
       const sessionMessages = await getSessionMessages(sessionId);
-      
+
       // 收集所有 TOOL_EXECUTION_RESULT 类型的消息
       const toolResultMessages = sessionMessages.filter(
         msg => msg.messageType === 'TOOL_EXECUTION_RESULT'
@@ -168,69 +159,87 @@ const ChatPage: React.FC = () => {
       const filteredMessages = sessionMessages.filter(
         msg => msg.messageType !== 'TOOL_EXECUTION_RESULT'
       );
-      
-      // 按 parentId 排序消息，确保消息顺序正确
+
+      // 按 parentId 排序消息
       const sortedMessages = filteredMessages.sort((a, b) => (a.parentId || 0) - (b.parentId || 0));
-      
-      // 处理消息：收集所有工具调用请求，然后合并到后面的 AI 回复消息
-      const processedMessages: SessionMessage[] = [];
-      const pendingToolRequests: ToolRequest[] = [];
-      
-      for (let i = 0; i < sortedMessages.length; i++) {
-        const msg = sortedMessages[i];
-        
-        // 检查是否是纯工具调用请求消息（AI 类型、有 toolRequests、且 text 为空或只有空白字符）
-        const isToolOnlyMessage = msg.messageType === 'AI' && 
-                                  msg.toolRequests && 
-                                  msg.toolRequests.length > 0 &&
-                                  (!msg.text || msg.text.trim() === '');
-        
-        if (isToolOnlyMessage) {
-          // 收集工具调用请求，暂不添加到 processedMessages
-          if (msg.toolRequests) {
-            pendingToolRequests.push(...msg.toolRequests);
+
+      // 合并连续的 AI 消息：将 thinking/toolRequests 与后续的 text 合并
+      const mergedMessages: SessionMessage[] = [];
+      let pendingAIMessage: SessionMessage | null = null;
+
+      for (const msg of sortedMessages) {
+        if (msg.messageType === 'AI') {
+          // 如果有待处理的 AI 消息（有 thinking 或 toolRequests 但 text 为空）
+          if (pendingAIMessage) {
+            // 如果当前 AI 消息有 text，合并到 pendingAIMessage
+            if (msg.text && msg.text.trim() !== '') {
+              // 创建合并后的新消息对象
+              const mergedMessage: SessionMessage = {
+                ...pendingAIMessage,
+                text: msg.text,
+                dateTime: msg.dateTime || pendingAIMessage.dateTime,
+                // 合并 toolRequests（如果后续消息也有）
+                toolRequests: msg.toolRequests
+                  ? [...(pendingAIMessage.toolRequests || []), ...msg.toolRequests]
+                  : pendingAIMessage.toolRequests,
+              };
+              mergedMessages.push(mergedMessage);
+              pendingAIMessage = null;
+            } else {
+              // 如果当前 AI 消息也没有 text，继续等待
+              // 合并 toolRequests
+              if (msg.toolRequests && msg.toolRequests.length > 0) {
+                if (!pendingAIMessage.toolRequests) {
+                  pendingAIMessage.toolRequests = [];
+                }
+                pendingAIMessage.toolRequests.push(...msg.toolRequests);
+              }
+            }
+          } else {
+            // 检查是否是纯工具调用请求消息（有 toolRequests 但 text 为空）
+            const hasToolRequests = msg.toolRequests && msg.toolRequests.length > 0;
+            const hasText = msg.text && msg.text.trim() !== '';
+            const hasThinking = msg.thinking && msg.thinking.trim() !== '';
+            
+            if (hasToolRequests || hasThinking) {
+              if (!hasText) {
+                // 暂存，等待后续的 text 消息
+                pendingAIMessage = {
+                  messageType: 'AI',
+                  text: '',
+                  thinking: msg.thinking,
+                  toolRequests: msg.toolRequests ? [...msg.toolRequests] : [],
+                  dateTime: msg.dateTime,
+                };
+              } else {
+                // 有 toolRequests/thinking 也有 text，直接添加
+                mergedMessages.push(msg);
+              }
+            } else {
+              // 直接添加（有实际内容的 AI 消息）
+              mergedMessages.push(msg);
+            }
           }
         } else {
-          // 如果是有实际内容的 AI 消息，且有待处理的工具调用请求，则合并
-          if (msg.messageType === 'AI' && msg.text && msg.text.trim() !== '' && pendingToolRequests.length > 0) {
-            // 合并工具调用请求到当前 AI 消息
-            const existingToolNames = new Set(msg.toolRequests?.map(tr => tr.name) || []);
-            pendingToolRequests.forEach(tr => {
-              if (!existingToolNames.has(tr.name)) {
-                if (!msg.toolRequests) {
-                  msg.toolRequests = [];
-                }
-                msg.toolRequests.push(tr);
-                existingToolNames.add(tr.name);
-              }
-            });
-            // 清空待处理的工具调用请求
-            pendingToolRequests.length = 0;
-          }
-          processedMessages.push(msg);
+          // USER 消息直接添加
+          mergedMessages.push(msg);
         }
       }
-      
-      // 如果遍历结束后还有未合并的工具调用请求，作为独立消息添加
-      if (pendingToolRequests.length > 0) {
-        // 创建一个工具调用请求消息
-        const toolOnlyMessage: SessionMessage = {
-          messageType: 'AI',
-          text: '',
-          toolRequests: pendingToolRequests,
-        };
-        processedMessages.push(toolOnlyMessage);
+
+      // 如果还有待处理的 AI 消息，添加进去（可能没有后续的 text）
+      if (pendingAIMessage) {
+        mergedMessages.push(pendingAIMessage);
       }
-      
+
       // useXChat 需要 MessageInfo<T> 格式
-      const messageInfos = processedMessages.map((msg, index) => ({
+      const messageInfos = mergedMessages.map((msg, index) => ({
         id: index.toString(),
         message: convertSessionMessageToChatMessage(msg, toolResultMessages),
         status: 'success' as const
       }));
 
       setMessages(messageInfos);
-      return processedMessages.map(m => convertSessionMessageToChatMessage(m, toolResultMessages));
+      return mergedMessages.map(m => convertSessionMessageToChatMessage(m, toolResultMessages));
     } catch (error) {
       console.error("加载会话消息失败:", error);
       throw error;

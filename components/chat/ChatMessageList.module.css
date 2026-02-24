@@ -119,19 +119,7 @@
   margin-bottom: 16px;
 }
 
-/* ThoughtChain 容器样式 */
-.thoughtChainContainer {
-  margin-bottom: 16px;
-}
 
-/* ThoughtChain 节点间距调整 */
-.thoughtChainContainer :global(.ant-thought-chain-item) {
-  margin-bottom: 12px;
-}
-
-.thoughtChainContainer :global(.ant-thought-chain-item:last-child) {
-  margin-bottom: 0;
-}
 
 /* 工具调用结果样式 - 简约扁平化 */
 .toolResult {
