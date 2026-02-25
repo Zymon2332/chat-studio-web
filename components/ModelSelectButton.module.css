@@ -62,12 +62,6 @@
   white-space: nowrap;
 }
 
-.downIcon {
-  font-size: 10px;
-  color: rgba(0, 0, 0, 0.4);
-  margin-left: 4px;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 /* Apple-style dropdown search */
 .searchInput {

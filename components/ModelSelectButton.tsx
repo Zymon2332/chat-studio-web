@@ -8,7 +8,6 @@ import React from "react";
 
 import {
   BulbOutlined,
-  DownOutlined,
   EyeOutlined,
   GlobalOutlined,
   PictureOutlined,
@@ -183,7 +182,6 @@ const ModelSelectButton: React.FC<ModelSelectButtonProps> = ({
           )}
           <span className={styles.modelName}>{displayModelName}</span>
         </div>
-        <DownOutlined className={styles.downIcon} />
       </div>
     </Dropdown>
   );
