@@ -1,7 +1,7 @@
 import React from 'react';
-import { Layout, Avatar, Button, Dropdown, message, theme, Divider, Tag, Flex, Typography } from 'antd';
+import { Layout, Avatar, Button, Dropdown, message, theme, Divider, Flex } from 'antd';
 import type { MenuProps } from 'antd';
-import { UserOutlined, SettingOutlined, LogoutOutlined, CrownOutlined, AppstoreOutlined, RocketOutlined, UpOutlined, DownOutlined, MessageOutlined, MessageFilled, BookOutlined, BookFilled, ApiOutlined, ApiFilled, ThunderboltOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { UserOutlined, SettingOutlined, LogoutOutlined, CrownOutlined, MessageOutlined, MessageFilled, BookOutlined, BookFilled, ApiOutlined, ApiFilled } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import classNames from 'classnames';
 import styles from './Header.module.css';
@@ -27,22 +27,13 @@ interface HeaderProps {
 
 const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSettingsClick, isLogin, onLogout, userInfo }) => {
   const router = useRouter();
-  const [collapsed, setCollapsed] = React.useState(false);
   const { token } = theme.useToken();
 
-  const workbenchTabs = [
+  const tabs = [
     { key: 'kb', iconOutline: <BookOutlined />, iconFilled: <BookFilled />, label: '知识库' },
     { key: 'chat', iconOutline: <MessageOutlined />, iconFilled: <MessageFilled />, label: '聊天' },
     { key: 'mcp', iconOutline: <ApiOutlined />, iconFilled: <ApiFilled />, label: 'MCP' },
   ];
-
-  const advancedTabs = [
-    { key: 'workflow', iconOutline: <ThunderboltOutlined />, iconFilled: <ThunderboltFilled />, label: '工作流' },
-  ];
-
-  const handleNewFeatureClick = (featureName: string) => {
-    message.info(`${featureName}功能正在开发中`);
-  };
 
   const handleAdminClick = () => {
     router.push('/admin');
@@ -116,7 +107,6 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
             if (tab.key === 'chat') router.push('/chat');
             else if (tab.key === 'kb') router.push('/knowledgebase');
             else if (tab.key === 'mcp') router.push('/mcp');
-            else handleNewFeatureClick(tab.label);
           }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -131,28 +121,16 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
   };
 
   return (
-    <Header
-      className={classNames(styles.header, { [styles.headerCollapsed]: collapsed })}
-    >
-      <div className={classNames(styles.innerContainer, { [styles.innerContainerCollapsed]: collapsed })}>
+    <Header className={styles.header}>
+      <div className={styles.innerContainer}>
         {/* 左侧占位 */}
         <div className={styles.leftPlaceholder}></div>
 
         {/* 中间 Tab */}
         <div className={styles.tabsWrapper}>
           <div className={styles.tabsContainer}>
-            {/* 工作台分组 */}
             <Flex align="center" gap={4} className={styles.tabGroup}>
-              {workbenchTabs.map(tab => (
-                <TabButton key={tab.key} tab={tab} isSelected={selectedTab === tab.key} />
-              ))}
-            </Flex>
-
-            <Divider orientation="vertical" />
-
-            {/* 高级功能分组 */}
-            <Flex align="center" gap={4}>
-              {advancedTabs.map(tab => (
+              {tabs.map(tab => (
                 <TabButton key={tab.key} tab={tab} isSelected={selectedTab === tab.key} />
               ))}
             </Flex>
@@ -180,14 +158,6 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
             />
           )}
         </div>
-      </div>
-
-      {/* 收起/展开按钮 */}
-      <div
-        onClick={() => setCollapsed(!collapsed)}
-        className={styles.collapseButton}
-      >
-        {collapsed ? <DownOutlined /> : <UpOutlined />}
       </div>
     </Header>
   );

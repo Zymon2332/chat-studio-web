@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import React, { useState, useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import HeaderComponent from "./Header";
 import UserModal from "./UserModal";
 import SettingsModal from "./SettingsModal";
@@ -14,44 +14,40 @@ interface AppMainProps {
 
 const AppMain: React.FC<AppMainProps> = ({ children }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { userInfo, clearUserInfo } = useUser();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
-  // 根据当前路径确定选中的 tab
-  const getSelectedTab = () => {
+  // 使用 useMemo 优化 selectedTab 计算
+  const selectedTab = useMemo(() => {
     if (pathname.startsWith('/chat')) return 'chat';
     if (pathname.startsWith('/knowledgebase') || pathname.startsWith('/documents')) return 'kb';
     if (pathname.startsWith('/mcp')) return 'mcp';
-    return 'chat'; // 默认选中 chat
-  };
+    return 'chat';
+  }, [pathname]);
 
   const handleUserClick = () => setUserModalOpen(true);
   const handleSettingsClick = () => setSettingsModalOpen(true);
   const handleUserModalClose = () => setUserModalOpen(false);
   const handleSettingsModalClose = () => setSettingsModalOpen(false);
-  const handleLogin = () => {
-    // 登录成功后，UserContext 会自动更新
-  };
   
   const handleLogout = async () => {
     try {
-      // 调用登出接口
       await logout();
     } catch (error) {
       console.error('登出接口调用失败:', error);
     } finally {
-      // 清除本地认证信息
       clearUserInfo();
-      // 登出后重定向到 chat 页面，清理所有界面数据
-      window.location.href = '/chat';
+      // 使用 router.replace 替代 window.location.href，避免整页刷新
+      router.replace('/chat');
     }
   };
 
   return (
     <div className={styles.container}>
       <HeaderComponent 
-        selectedTab={getSelectedTab()} 
+        selectedTab={selectedTab}
         onUserClick={handleUserClick}
         onSettingsClick={handleSettingsClick}
         isLogin={userInfo !== null}
@@ -59,14 +55,12 @@ const AppMain: React.FC<AppMainProps> = ({ children }) => {
         userInfo={userInfo}
       />
       <main className={styles.main}>
-        <div className={styles.contentWrapper}>
-          {children}
-        </div>
+        {children}
       </main>
       <UserModal
         open={userModalOpen}
         onCancel={handleUserModalClose}
-        onLogin={handleLogin}
+        onLogin={() => {}}
       />
       <SettingsModal
         open={settingsModalOpen}
