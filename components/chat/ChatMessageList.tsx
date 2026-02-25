@@ -118,10 +118,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
           assistant: {
             placement: "start",
             loadingRender: () => (
-              <Flex align="center" gap="small" className={styles.assistantLoading}>
-                <LoadingOutlined spin style={{ fontSize: 16 }} />
-                <span className={styles.thinkingText}>Thinking...</span>
-              </Flex>
+              <div className={styles.assistantLoading}>
+                <div className={styles.loadingDots}>
+                  <span className={styles.dot}></span>
+                  <span className={styles.dot}></span>
+                  <span className={styles.dot}></span>
+                </div>
+              </div>
             ),
             contentRender: (content: any) => {
               const msg = content as ChatMessage & { messageIndex: number };
