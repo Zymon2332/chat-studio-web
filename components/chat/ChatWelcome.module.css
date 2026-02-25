@@ -16,7 +16,8 @@
 
 /* 头部欢迎区 */
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  text-align: center;
 }
 
 .welcomeTitle {
@@ -38,222 +39,73 @@
   margin: 0;
 }
 
+/* 对话示例区 */
+.suggestionsSection {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin: 0 0 16px;
+}
+
+.suggestionsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.suggestionCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.suggestionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(24, 144, 255, 0.2);
+}
+
+.suggestionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.suggestionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 4px;
+}
+
+.suggestionPrompt {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* 卡片通用样式 */
 .card {
   background: #fff;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-/* 上部区域 */
-.topSection {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-/* 智能助手建议卡片 */
-.suggestionCard {
-  position: relative;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  background: linear-gradient(135deg, rgba(248, 250, 255, 0.8) 0%, rgba(240, 244, 255, 0.6) 100%);
-}
-
-.suggestionContent {
-  z-index: 1;
-}
-
-.suggestionTag {
-  display: inline-block;
-  padding: 4px 12px;
-  background: #3b82f6;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-.suggestionMainTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
-  margin: 0 0 12px;
-  line-height: 1.4;
-}
-
-.suggestionDesc {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
-  margin: 0 0 20px;
-  line-height: 1.5;
-}
-
-.suggestionButtons {
-  display: flex;
-  gap: 12px;
-}
-
-.primaryButton {
-  padding: 10px 24px;
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.primaryButton:hover {
-  background: #2563eb;
-}
-
-.secondaryButton {
-  padding: 10px 24px;
-  background: #fff;
-  color: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.secondaryButton:hover {
-  border-color: rgba(0, 0, 0, 0.15);
-}
-
-.suggestionIconBg {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #3b82f6;
-}
-
-/* 会议摘要卡片 */
-.meetingCard {
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.videoThumbnail {
-  position: relative;
-  height: 160px;
-  background: linear-gradient(135deg, #e8ecf1 0%, #dfe3e8 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.playButton {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.playButton:hover {
-  transform: scale(1.05);
-}
-
-.duration {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  padding: 4px 8px;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  font-size: 12px;
-  border-radius: 4px;
-}
-
-.meetingInfo {
-  padding: 16px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.meetingHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.meetingType {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #3b82f6;
-  font-weight: 500;
-}
-
-.meetingTime {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
-}
-
-.meetingTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
-  margin: 0 0 8px;
-}
-
-.meetingDesc {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
-  margin: 0 0 16px;
-  line-height: 1.5;
-  flex: 1;
-}
-
-.viewMoreButton {
-  width: 100%;
-  padding: 10px;
-  background: #f8f9fc;
-  color: rgba(0, 0, 0, 0.65);
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.viewMoreButton:hover {
-  background: #eff1f5;
-}
-
-/* 下部区域 */
-.bottomSection {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 16px;
-}
-
-/* 最近查看卡片 */
-.recentCard {
-  min-height: 200px;
 }
 
 .cardHeader {
@@ -271,7 +123,7 @@
 
 .cardIcon {
   font-size: 18px;
-  color: #3b82f6;
+  color: #1890ff;
 }
 
 .cardTitle {
@@ -281,9 +133,12 @@
 }
 
 .viewAllButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 6px 12px;
   background: transparent;
-  color: #3b82f6;
+  color: #1890ff;
   border: none;
   font-size: 13px;
   cursor: pointer;
@@ -294,203 +149,171 @@
   opacity: 0.8;
 }
 
-.fileList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* 底部区域 */
+.bottomSection {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
 }
 
-.fileItem {
+/* 最近对话卡片 */
+.conversationsCard {
+  min-height: 280px;
+}
+
+.conversationList {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conversationItem {
+  padding: 12px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
-.fileItem:hover {
-  background: #f8f9fc;
+.conversationItem:hover {
+  background: #f5f7fa;
 }
 
-.fileIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.fileInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.fileName {
+.conversationTitle {
   font-size: 14px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.85);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.fileSubtitle {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
-}
-
-/* 任务卡片 */
-.taskCard {
-  min-height: 200px;
-}
-
-.taskFilter {
+.conversationMeta {
   display: flex;
-  gap: 4px;
-  background: #f0f2f5;
-  padding: 4px;
-  border-radius: 8px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
 }
 
-.filterActive {
-  padding: 6px 14px;
-  background: #fff;
-  color: rgba(0, 0, 0, 0.65);
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
+.conversationModel {
+  padding: 2px 8px;
+  background: #e6f4ff;
+  color: #1890ff;
+  border-radius: 4px;
   font-weight: 500;
 }
 
-.filterInactive {
-  padding: 6px 14px;
-  background: transparent;
+.conversationTime {
   color: rgba(0, 0, 0, 0.35);
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
 }
 
-.taskList {
+/* 功能入口区 */
+.featuresSection {
   display: flex;
   flex-direction: column;
 }
 
-.taskTableHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 60px;
+.featuresGrid {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.taskHeaderCell {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
-  font-weight: 400;
+.featureCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
-.taskItem {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 60px;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  align-items: center;
+.featureCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-.taskItem:last-child {
-  border-bottom: none;
-}
-
-.taskName {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
-}
-
-.taskStatus {
-  display: inline-flex;
+.featureIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  width: fit-content;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
-.taskStatus.urgent {
-  background: #ffe8e8;
-  color: #ff4d4f;
+.featureContent {
+  flex: 1;
 }
 
-.taskStatus.inprogress {
-  background: #e6f4ff;
-  color: #1890ff;
+.featureTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 4px;
 }
 
-.taskStatus.pending {
-  background: #f5f5f5;
-  color: rgba(0, 0, 0, 0.45);
-}
-
-.taskDueDate {
+.featureDesc {
   font-size: 13px;
   color: rgba(0, 0, 0, 0.45);
+  margin-bottom: 12px;
 }
 
-.taskAssignee {
+.featureActions {
   display: flex;
-  justify-content: flex-end;
+  gap: 8px;
 }
 
-.assigneeAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ffd591 0%, #ffc069 100%);
+.featureActionBtn {
+  padding: 6px 12px;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.featureActionBtn:hover {
+  background: #e8ecf1;
+  color: rgba(0, 0, 0, 0.85);
 }
 
 /* 响应式 */
 @media (max-width: 1024px) {
-  .topSection {
-    grid-template-columns: 1fr;
+  .suggestionsGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  .meetingCard {
-    max-width: 380px;
-  }
-  
+
   .bottomSection {
     grid-template-columns: 1fr;
   }
-  
-  .recentCard {
-    max-width: 280px;
+
+  .conversationsCard {
+    max-width: 100%;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .welcomeTitle {
     font-size: 24px;
   }
-  
-  .suggestionMainTitle {
-    font-size: 18px;
-  }
-  
-  .taskTableHeader {
-    display: none;
-  }
-  
-  .taskItem {
+
+  .suggestionsGrid {
     grid-template-columns: 1fr;
-    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .featureActions {
+    flex-wrap: wrap;
   }
 }

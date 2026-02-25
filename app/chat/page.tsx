@@ -74,7 +74,7 @@ const convertSessionMessageToChatMessage = (
 
 const ChatPage: React.FC = () => {
   const { userInfo } = useUser();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
 
