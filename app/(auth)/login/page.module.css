@@ -1,0 +1,256 @@
+/* ===== 全局容器 ===== */
+.container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  padding: 24px 40px;
+  position: relative;
+}
+
+
+/* ===== 主内容区 ===== */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 60px 0;
+}
+
+/* ===== 标题区 ===== */
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ===== 表单样式 ===== */
+.form {
+  width: 100%;
+}
+
+.formFields {
+  position: relative;
+  min-height: 120px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldGroup:not(.active) {
+  display: none;
+}
+
+.fieldGroup.active {
+  display: flex;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.formItem {
+  margin-bottom: 0px !important;
+}
+
+.formItem:last-child {
+  margin-bottom: 0 !important;
+}
+
+.formItem :global(.ant-form-item-label) {
+  padding-bottom: 6px !important;
+}
+
+.formItem :global(.ant-form-item-label > label) {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+}
+
+/* 输入框样式 */
+.input {
+  height: 44px !important;
+  background: #f3f4f6 !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #111827 !important;
+  padding: 0 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.input:hover {
+  background: #e5e7eb !important;
+}
+
+.input:focus {
+  background: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.input :global(.ant-input) {
+  background: transparent !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+}
+
+.input :global(.ant-input::placeholder) {
+  color: #9ca3af !important;
+  font-size: 14px !important;
+}
+
+.input :global(.ant-input-suffix) {
+  color: #9ca3af !important;
+}
+
+/* 验证码行 */
+.captchaRow {
+  display: flex;
+  gap: 12px;
+}
+
+.captchaInput {
+  flex: 1;
+}
+
+.codeButton {
+  height: 44px !important;
+  padding: 0 16px !important;
+  background: transparent !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  color: #2563eb !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  white-space: nowrap;
+  transition: all 0.2s ease !important;
+}
+
+.codeButton:hover:not(:disabled) {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+}
+
+.codeButton:disabled {
+  color: #9ca3af !important;
+  border-color: #e5e7eb !important;
+}
+
+/* ===== 提交按钮 ===== */
+.submitItem {
+  margin-top: 40px !important;
+  margin-bottom: 0 !important;
+}
+
+.submitButton {
+  height: 44px !important;
+  background: #3b82f6 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #2563eb !important;
+}
+
+.submitButton:active {
+  transform: scale(0.98) !important;
+}
+
+/* ===== 底部区域 ===== */
+.footer {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.switchSection {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.switchLink {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0;
+  transition: opacity 0.2s ease;
+}
+
+.switchLink:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .container {
+    padding: 20px 24px;
+  }
+
+  .logo {
+    left: 24px;
+    top: 20px;
+  }
+
+  .content {
+    padding: 80px 0 40px;
+  }
+}
+
+/* ===== Ant Design 覆盖 ===== */
+.form :global(.ant-form-item-explain-error) {
+  color: #ef4444 !important;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.input :global(.ant-input-affix-wrapper) {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.input :global(.ant-input-password-icon) {
+  color: #9ca3af !important;
+}
+
+.input :global(.ant-input-password-icon:hover) {
+  color: #6b7280 !important;
+}

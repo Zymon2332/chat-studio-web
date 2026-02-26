@@ -81,32 +81,20 @@ const ChatPage: React.FC = () => {
 
   // 加载会话列表
   const loadSessionList = useCallback(async () => {
-    try {
-      const sessions = await getSessionList();
-      setSessions(sessions);
-    } catch (error) {
-      console.error("加载会话列表失败:", error);
-    }
+    const sessions = await getSessionList();
+    setSessions(sessions);
   }, []);
 
   // 加载模型列表
   const loadModelList = useCallback(async () => {
-    try {
-      const list = await getModelList();
-      setModelList(list);
-    } catch (error) {
-      console.error("加载模型列表失败:", error);
-    }
+    const list = await getModelList();
+    setModelList(list);
   }, []);
 
   // 加载默认模型
   const loadDefaultModel = useCallback(async () => {
-    try {
-      const model = await getDefaultModel();
-      setDefaultModel(model);
-    } catch (error) {
-      console.error("加载默认模型失败:", error);
-    }
+    const model = await getDefaultModel();
+    setDefaultModel(model);
   }, []);
 
   // 加载会话消息
@@ -189,17 +177,11 @@ const ChatPage: React.FC = () => {
 
   // 处理会话选择
   const handleConversationSelect = useCallback(async (key: string) => {
-    try {
-      handleCancel();
-      setSelectedId(key);
-      setSessionId(key);
-      setPreviewVisible(false);
-      await loadSessionMessages(key);
-    } catch (error) {
-      console.error("切换会话失败:", error);
-      antdMessage.error("切换会话失败，请重试");
-      setMessages([]);
-    }
+    handleCancel();
+    setSelectedId(key);
+    setSessionId(key);
+    setPreviewVisible(false);
+    await loadSessionMessages(key);
   }, [handleCancel, setSessionId, loadSessionMessages, setMessages]);
 
   return (

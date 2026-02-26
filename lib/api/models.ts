@@ -128,13 +128,8 @@ export const installModel = async (providerId: string, apiKey: string, settings?
 
 // 获取默认模型
 export const getDefaultModel = async (): Promise<DefaultModel | null> => {
-  try {
-    const data = await request.get('/models/default');
-    return data as unknown as DefaultModel | null;
-  } catch (error) {
-    console.error('获取默认模型失败:', error);
-    throw error;
-  }
+  const data = await request.get('/models/default');
+  return data as unknown as DefaultModel | null;
 };
 
 // 设置默认模型

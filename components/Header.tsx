@@ -18,14 +18,13 @@ interface UserInfo {
 
 interface HeaderProps {
   selectedTab: string;
-  onUserClick: () => void;
   onSettingsClick: () => void;
   isLogin: boolean;
   onLogout: () => void;
   userInfo: UserInfo | null;
 }
 
-const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSettingsClick, isLogin, onLogout, userInfo }) => {
+const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onSettingsClick, isLogin, onLogout, userInfo }) => {
   const router = useRouter();
   const { token } = theme.useToken();
 
@@ -148,13 +147,15 @@ const HeaderComponent: React.FC<HeaderProps> = ({ selectedTab, onUserClick, onSe
               <Avatar
                 size={40}
                 icon={<UserOutlined />}
+                style={{ cursor: 'pointer' }}
               />
             </Dropdown>
           ) : (
             <Avatar
               size={40}
               icon={<UserOutlined />}
-              onClick={onUserClick}
+              style={{ cursor: 'pointer' }}
+              onClick={() => router.push('/login')}
             />
           )}
         </div>

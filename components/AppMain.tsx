@@ -1,8 +1,7 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import React, { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import HeaderComponent from "./Header";
-import UserModal from "./UserModal";
 import SettingsModal from "./SettingsModal";
 import { logout } from "../lib/api";
 import { useUser } from "@/contexts/UserContext";
@@ -14,10 +13,8 @@ interface AppMainProps {
 
 const AppMain: React.FC<AppMainProps> = ({ children }) => {
   const pathname = usePathname();
-  const router = useRouter();
-  const { userInfo, clearUserInfo } = useUser();
-  const [userModalOpen, setUserModalOpen] = useState(false);
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const { userInfo, isLogin, clearUserInfo } = useUser();
+  const [settingsModalOpen, setSettingsModalOpen] = React.useState(false);
 
   // 使用 useMemo 优化 selectedTab 计算
   const selectedTab = useMemo(() => {
@@ -27,41 +24,35 @@ const AppMain: React.FC<AppMainProps> = ({ children }) => {
     return 'chat';
   }, [pathname]);
 
-  const handleUserClick = () => setUserModalOpen(true);
   const handleSettingsClick = () => setSettingsModalOpen(true);
-  const handleUserModalClose = () => setUserModalOpen(false);
   const handleSettingsModalClose = () => setSettingsModalOpen(false);
-  
+
   const handleLogout = async () => {
     try {
       await logout();
     } catch (error) {
       console.error('登出接口调用失败:', error);
     } finally {
+      // clearUserInfo 会自动清除 localStorage 和 cookie
       clearUserInfo();
-      // 使用 router.replace 替代 window.location.href，避免整页刷新
-      router.replace('/chat');
+      // 主动跳转到登录页（中间件会拦截并重定向）
+      window.location.href = '/login';
     }
   };
 
+  // 始终渲染完整布局（中间件会控制页面访问权限）
   return (
     <div className={styles.container}>
-      <HeaderComponent 
+      <HeaderComponent
         selectedTab={selectedTab}
-        onUserClick={handleUserClick}
         onSettingsClick={handleSettingsClick}
-        isLogin={userInfo !== null}
+        isLogin={isLogin}
         onLogout={handleLogout}
         userInfo={userInfo}
       />
       <main className={styles.main}>
         {children}
       </main>
-      <UserModal
-        open={userModalOpen}
-        onCancel={handleUserModalClose}
-        onLogin={() => {}}
-      />
       <SettingsModal
         open={settingsModalOpen}
         onClose={handleSettingsModalClose}

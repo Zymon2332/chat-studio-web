@@ -46,6 +46,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (typeof window !== 'undefined') {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userInfo');
+      // 同时清除 cookie（供中间件使用）
+      document.cookie = 'authToken=; path=/; max-age=0';
     }
     setUserInfo(null);
     setIsLogin(false);

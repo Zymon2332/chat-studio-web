@@ -79,8 +79,6 @@ const SessionManageModal: React.FC<SessionManageModalProps> = ({
       }));
       setSessions(extendedSessions);
       setFilteredSessions(extendedSessions);
-    } catch (error) {
-      console.error('加载会话列表失败:', error);
     } finally {
       setLoading(false);
     }

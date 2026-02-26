@@ -8,10 +8,10 @@ import {
   SettingOutlined
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import { UserInfo } from '../../lib/api';
-import DashboardPanel from '../../components/admin/DashboardPanel';
-import UserManagementPanel from '../../components/admin/UserManagementPanel';
-import SystemSettingsPanel from '../../components/admin/SystemSettingsPanel';
+import { UserInfo } from '@/lib/api';
+import DashboardPanel from '@/components/admin/DashboardPanel';
+import UserManagementPanel from '@/components/admin/UserManagementPanel';
+import SystemSettingsPanel from '@/components/admin/SystemSettingsPanel';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
