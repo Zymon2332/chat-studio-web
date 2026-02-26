@@ -1,0 +1,47 @@
+.userMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.imageContainer {
+  max-width: 100%;
+}
+
+.image {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.filePlaceholder {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+.videoIcon {
+  font-size: 24px;
+  color: var(--ant-color-primary, #1890ff);
+  margin-right: 8px;
+}
+
+.audioIcon {
+  font-size: 24px;
+  color: var(--ant-color-success, #13c2c2);
+  margin-right: 8px;
+}
+
+.pdfIcon {
+  font-size: 24px;
+  color: var(--ant-color-error, #ff4d4f);
+  margin-right: 8px;
+}
+
+.fileName {
+  max-width: 200px;
+}

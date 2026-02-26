@@ -113,17 +113,17 @@ const ChatPage: React.FC = () => {
   const loadSessionMessages = useCallback(async (sessionId: string) => {
     try {
       const sessionMessages = await getSessionMessages(sessionId);
-      const { processedMessages, toolResultMessages } = processSessionMessages(sessionMessages);
+      const processedMessages = processSessionMessages(sessionMessages);
 
       // 转换为 MessageInfo<T> 格式
-      const messageInfos = processedMessages.map((msg, index) => ({
+      const messageInfos = processedMessages.map((msg: SessionMessage, index: number) => ({
         id: index.toString(),
-        message: convertSessionMessageToChatMessage(msg, toolResultMessages),
+        message: convertSessionMessageToChatMessage(msg),
         status: 'success' as const
       }));
 
       setMessages(messageInfos);
-      return processedMessages.map(m => convertSessionMessageToChatMessage(m, toolResultMessages));
+      return processedMessages.map((m: SessionMessage) => convertSessionMessageToChatMessage(m));
     } catch (error) {
       console.error("加载会话消息失败:", error);
       throw error;
