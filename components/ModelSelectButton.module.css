@@ -90,36 +90,3 @@
   border-radius: 3px;
   object-fit: contain;
 }
-
-/* Override Ant Design Menu styles for Apple look */
-:global(.ant-dropdown-menu) {
-  border-radius: 12px !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  padding: 6px !important;
-}
-
-:global(.ant-dropdown-menu-item) {
-  border-radius: 8px !important;
-  padding: 8px 12px !important;
-  transition: all 0.15s ease !important;
-}
-
-:global(.ant-dropdown-menu-item:hover) {
-  background: rgba(0, 0, 0, 0.03) !important;
-}
-
-:global(.ant-dropdown-menu-item-group-title) {
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  color: rgba(0, 0, 0, 0.35) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  padding: 8px 12px 4px !important;
-}
-
-/* Ability icons in menu */
-:global(.ant-dropdown-menu-item .anticon) {
-  font-size: 14px;
-  opacity: 0.7;
-}

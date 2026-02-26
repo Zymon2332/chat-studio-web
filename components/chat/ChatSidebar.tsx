@@ -93,17 +93,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   // 保存编辑
   const handleSaveEdit = useCallback(async () => {
     if (editingKey && editingValue.trim()) {
-      try {
-        await updateSessionTitle(editingKey, editingValue.trim());
-        antdMessage.success("会话名称已更新");
+      await updateSessionTitle(editingKey, editingValue.trim());
         onSessionsChange?.();
-      } catch (error) {
-        console.error("更新会话名称失败:", error);
-        antdMessage.error(
-          "更新会话名称失败: " +
-            (error instanceof Error ? error.message : "未知错误")
-        );
-      }
     }
     setEditingKey(null);
     setEditingValue("");

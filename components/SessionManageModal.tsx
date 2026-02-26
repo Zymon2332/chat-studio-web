@@ -106,7 +106,6 @@ const SessionManageModal: React.FC<SessionManageModalProps> = ({
 
   // 保存编辑
   const saveEdit = async (sessionId: string) => {
-    try {
       // 调用更新会话名称的API
       await updateSessionTitle(sessionId, editingTitle);
       
@@ -128,13 +127,9 @@ const SessionManageModal: React.FC<SessionManageModalProps> = ({
       
       setEditingKey('');
       setEditingTitle('');
-      message.success('会话名称已更新');
       
       // 通知父组件会话已变更
       onSessionsChange?.();
-    } catch (error) {
-      message.error('更新会话名称失败: ' + (error instanceof Error ? error.message : '未知错误'));
-    }
   };
 
   // 取消编辑
