@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Form, Input, Button, message } from 'antd';
 import { login, register, sendCode, LoginRequest, RegisterRequest, AuthResponse } from '@/lib/api';
 import styles from './page.module.css';
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginForm] = Form.useForm();
@@ -282,5 +282,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#ffffff' }} />}>
+      <LoginFormContent />
+    </Suspense>
   );
 }
