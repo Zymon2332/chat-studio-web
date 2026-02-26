@@ -41,7 +41,6 @@ interface ChatMessageInputProps {
   defaultModel?: DefaultModel | null;
   modelList?: ModelProviderWithModels[];
   onModelSelect?: (model: ModelListItem) => void;
-  showGradientOverlay?: boolean;
 }
 
 const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
@@ -55,7 +54,6 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   defaultModel,
   modelList,
   onModelSelect,
-  showGradientOverlay = true,
 }) => {
   const [uploadId, setUploadId] = React.useState<string | undefined>(undefined);
   const [contentType, setContentType] = React.useState<string | undefined>(undefined);
@@ -240,7 +238,6 @@ const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
 
   return (
     <div className={styles.inputWrapper}>
-      {showGradientOverlay && <div className={styles.gradientOverlay} />}
       <div className={styles.wrapper}>
         <Sender
           header={fileName || uploading ? senderHeader : undefined}

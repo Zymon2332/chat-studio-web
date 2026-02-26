@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react';
 import { theme } from 'antd';
+import React, { useMemo } from 'react';
+
 import { Bubble } from '@ant-design/x';
-import type { ToolRequest, ToolResponse } from '@/lib/api/conversations';
-import UserMessage from './message-parts/UserMessage';
+
+import styles from './ChatMessageList.module.css';
 import AssistantMessage from './message-parts/AssistantMessage';
 import LoadingIndicator from './message-parts/LoadingIndicator';
 import MessageFooter from './message-parts/MessageFooter';
-import styles from './ChatMessageList.module.css';
+import UserMessage from './message-parts/UserMessage';
 
+import type { ToolRequest, ToolResponse } from "@/lib/api/conversations";
 // 聊天消息类型定义
 export interface ChatMessage {
   content: string;
@@ -17,7 +19,7 @@ export interface ChatMessage {
   thinking?: string; // 深度思考内容
   toolRequests?: ToolRequest[]; // 工具调用请求
   toolResponses?: ToolResponse[]; // 工具调用结果
-  contentType?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF'; // 文件类型
+  contentType?: "IMAGE" | "VIDEO" | "AUDIO" | "PDF"; // 文件类型
   fileUrl?: string; // 文件链接
   dateTime?: string; // 消息时间
 }
@@ -36,25 +38,31 @@ const generateMessageKey = (msg: ChatMessage, index: number): string => {
   return `${msg.role}-${index}-${msg.content.slice(0, 20)}`;
 };
 
-const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }) => {
+const ChatMessageList: React.FC<ChatMessageListProps> = ({
+  messages,
+  onPreview,
+}) => {
   const { token } = theme.useToken();
 
   // 使用 useMemo 缓存 bubble items 配置
   const bubbleItems = useMemo(() => {
     return messages.map((msg, index) => {
-      const variant: "shadow" | "borderless" = msg.role === 'user' ? "shadow" : "borderless";
+      const variant: "shadow" | "borderless" =
+        msg.role === "user" ? "shadow" : "borderless";
       return {
         key: generateMessageKey(msg, index),
         className: styles.bubbleItem,
         content: msg,
         role: msg.role,
         loading: msg.isLoading,
+        streaming: msg.role === "assistant",
         variant,
         styles: {
           content: {
-            backgroundColor: msg.role === 'user' ? token.colorPrimaryBg : 'transparent',
-          }
-        }
+            backgroundColor:
+              msg.role === "user" ? token.colorPrimaryBg : "transparent",
+          },
+        },
       };
     });
   }, [messages, token.colorPrimaryBg]);
@@ -68,7 +76,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
   // 用户消息底部
   const renderUserFooter = (content: unknown) => {
     const msg = content as ChatMessage;
-    return <MessageFooter message={msg} />;
+    return <MessageFooter message={msg} showActions />;
   };
 
   // 助手消息渲染
@@ -80,7 +88,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
   // 助手消息底部
   const renderAssistantFooter = (content: unknown) => {
     const msg = content as ChatMessage;
-    return <MessageFooter message={msg} showActions />;
+    return <MessageFooter message={msg} showActions={!msg.isLoading} />;
   };
 
   // 助手加载状态渲染
@@ -97,12 +105,14 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, onPreview }
             placement: "end",
             contentRender: renderUserContent,
             footer: renderUserFooter,
+            footerPlacement: "outer-end",
           },
           assistant: {
             placement: "start",
             loadingRender: renderAssistantLoading,
             contentRender: renderAssistantContent,
             footer: renderAssistantFooter,
+            footerPlacement: "inner-start"
           },
         }}
       />

@@ -226,16 +226,14 @@ const ChatPage: React.FC = () => {
         >
           <Splitter.Panel size={panelSizes[0]} min="40%" max="80%">
             <div className={styles.splitterPanel}>
-              <div className={styles.messagesContainer}>
-                {displayMessages.length === 0 ? (
-                  <ChatWelcome userName={userInfo?.nickName} />
-                ) : (
-                  <ChatMessageList
-                    messages={displayMessages}
-                    onPreview={handlePreview}
-                  />
-                )}
-              </div>
+              {displayMessages.length === 0 ? (
+                <ChatWelcome userName={userInfo?.nickName} />
+              ) : (
+                <ChatMessageList
+                  messages={displayMessages}
+                  onPreview={handlePreview}
+                />
+              )}
               <ChatMessageInput
                 value={inputValue}
                 onChange={setInputValue}
@@ -246,7 +244,6 @@ const ChatPage: React.FC = () => {
                 defaultModel={defaultModel}
                 modelList={modelList}
                 onModelSelect={setSelectedModel}
-                showGradientOverlay={displayMessages.length > 0}
               />
             </div>
           </Splitter.Panel>

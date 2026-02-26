@@ -165,9 +165,15 @@ const MarkdownRendererInternal: React.FC<{
         <XMarkdown
           className="x-markdown-light"
           content={content}
-          style={{ fontSize: "15px" }}
           components={{ code: Code }}
           config={{ extensions: Latex() }}
+          streaming={{
+            hasNextChunk: true,
+            enableAnimation: true,
+            animationConfig: {
+              easing: 'linear'
+            }
+          }}
         />
       </div>
     </PreviewContext.Provider>

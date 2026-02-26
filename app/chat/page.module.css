@@ -22,14 +22,3 @@
   flex-direction: column;
   height: 100%;
 }
-
-.messagesContainer {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-}
-
-.confirmModal :global(.ant-modal-body) {
-  padding: 24px;
-}
