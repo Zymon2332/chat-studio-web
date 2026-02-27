@@ -15,14 +15,14 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0(@ant-design/cssinjs@2.0.1(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(antd@6.0.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(next@16.0.7(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
       '@ant-design/x':
-        specifier: ^2.2.1
-        version: 2.2.1(antd@6.0.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
+        specifier: ^2.2.2
+        version: 2.2.2(antd@6.0.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
       '@ant-design/x-markdown':
-        specifier: ^2.2.1
-        version: 2.2.1(@types/react@19.2.7)(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
+        specifier: ^2.2.2
+        version: 2.2.2(@types/react@19.2.7)(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
       '@ant-design/x-sdk':
-        specifier: ^2.2.1
-        version: 2.2.1(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
+        specifier: ^2.2.2
+        version: 2.2.2(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
       antd:
         specifier: ^6.0.0
         version: 6.0.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
@@ -140,20 +140,20 @@ packages:
     peerDependencies:
       react: '>=16.9.0'
 
-  '@ant-design/x-markdown@2.2.1':
-    resolution: {integrity: sha512-wqETe1UktJ2xs4BwfPcO6dZio7tuTpVxFpyTSjJyo6rnROo6pnf3O0E5FukMuchdqJcYFL74obqxQFMeVfsNTQ==}
+  '@ant-design/x-markdown@2.2.2':
+    resolution: {integrity: sha512-ICKjXZsZqUo+isgZ3cGdx8V929iaidKUpEcjDpQ8ZV7KWocpwjM43SMdu2WSTaZm4uxgs0ACPTMALvWWdK69Rg==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@ant-design/x-sdk@2.2.1':
-    resolution: {integrity: sha512-wtX2i7WJllGFg3JLYdzkvP8gzJtrkrx6Xn224OQRwk4W++wVmYQTOKx6Q9j4oLttS4dO5nB4Fpo820FtPl2rkQ==}
+  '@ant-design/x-sdk@2.2.2':
+    resolution: {integrity: sha512-u9t33iOPe/Ckvaec8tBhCxXqr4KwDY+gIXJuBgTMEk2JE0MM1p8HHNf0fRcKFEBC/gZsiXFexoAjdCupuchRUQ==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@ant-design/x@2.2.1':
-    resolution: {integrity: sha512-Wh20TdjZ+sxSKJMhfFwrPZmEsrHn1zWHu0ilsw9rgKGyVOMobhii1FU+8W9DWBeHapj5FEjLeMe88rx2+JFo+A==}
+  '@ant-design/x@2.2.2':
+    resolution: {integrity: sha512-fNXMfCKBT3goPUHgm3DE863IgWlFe233EAeR4CZKChVVc/oUdj19uRURNMV6LL1l535FToNZAiaCz7BXSxxZZg==}
     peerDependencies:
       antd: ^6.1.1
       react: '>=18.0.0'
@@ -2976,7 +2976,7 @@ snapshots:
       resize-observer-polyfill: 1.5.1
       throttle-debounce: 5.0.2
 
-  '@ant-design/x-markdown@2.2.1(@types/react@19.2.7)(react-dom@19.0.1(react@19.0.1))(react@19.0.1)':
+  '@ant-design/x-markdown@2.2.2(@types/react@19.2.7)(react-dom@19.0.1(react@19.0.1))(react@19.0.1)':
     dependencies:
       clsx: 2.1.1
       dompurify: 3.2.6
@@ -2988,13 +2988,13 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@ant-design/x-sdk@2.2.1(react-dom@19.0.1(react@19.0.1))(react@19.0.1)':
+  '@ant-design/x-sdk@2.2.2(react-dom@19.0.1(react@19.0.1))(react@19.0.1)':
     dependencies:
       '@rc-component/util': 1.4.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
       react: 19.0.1
       react-dom: 19.0.1(react@19.0.1)
 
-  '@ant-design/x@2.2.1(antd@6.0.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(react-dom@19.0.1(react@19.0.1))(react@19.0.1)':
+  '@ant-design/x@2.2.2(antd@6.0.0(react-dom@19.0.1(react@19.0.1))(react@19.0.1))(react-dom@19.0.1(react@19.0.1))(react@19.0.1)':
     dependencies:
       '@ant-design/colors': 8.0.0
       '@ant-design/cssinjs': 2.0.1(react-dom@19.0.1(react@19.0.1))(react@19.0.1)
