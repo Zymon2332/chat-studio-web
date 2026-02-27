@@ -16,6 +16,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   avatar?: string;
   isLoading?: boolean;
+  streamCompleted?: boolean;
   thinking?: string; // 深度思考内容
   toolRequests?: ToolRequest[]; // 工具调用请求
   toolResponses?: ToolResponse[]; // 工具调用结果
@@ -88,7 +89,8 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   // 助手消息底部
   const renderAssistantFooter = (content: unknown) => {
     const msg = content as ChatMessage;
-    return <MessageFooter message={msg} showActions={!msg.isLoading} />;
+    const shouldShowActions = msg.streamCompleted ?? !msg.isLoading;
+    return <MessageFooter message={msg} showActions={shouldShowActions} />;
   };
 
   // 助手加载状态渲染

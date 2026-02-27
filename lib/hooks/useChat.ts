@@ -85,6 +85,7 @@ export const useChat = ({
           role: "assistant",
           avatar: "🤖",
           isLoading: true,
+          streamCompleted: false,
         },
         status: "loading",
       };
@@ -157,6 +158,7 @@ export const useChat = ({
                       ...msg.message,
                       content: fullContent,
                       isLoading: false,
+                      streamCompleted: false,
                     },
                   };
                 }
@@ -175,6 +177,7 @@ export const useChat = ({
                 message: {
                   ...msg.message,
                   isLoading: false,
+                  streamCompleted: true,
                   content: fullContent,
                 },
               };

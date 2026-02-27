@@ -21,6 +21,7 @@ export const convertSessionMessageToChatMessage = (
     content,
     role,
     avatar: role === 'user' ? '👤' : '🤖',
+    streamCompleted: role === 'assistant',
     thinking: sessionMessage.thinking,
     toolRequests: sessionMessage.toolRequests,
     toolResponses: sessionMessage.toolResponses,
