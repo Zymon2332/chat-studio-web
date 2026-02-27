@@ -31,7 +31,7 @@ export const convertSessionMessageToChatMessage = (
   if (sessionMessage.messageType === 'USER' && sessionMessage.contents) {
     const fileContent = sessionMessage.contents.find(c => c.contentType !== 'TEXT');
     if (fileContent) {
-      chatMessage.fileUrl = fileContent.text;
+      chatMessage.fileUrl = fileContent.url;
       chatMessage.contentType = fileContent.contentType as 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF';
     }
   }

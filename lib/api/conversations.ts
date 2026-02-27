@@ -13,7 +13,9 @@ export interface SessionItem {
 // 内容项类型
 export interface ContentItem {
   contentType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF';
-  text: string;
+  text?: string;  // TEXT 类型使用
+  url?: string;   // IMAGE/VIDEO/AUDIO/PDF 类型使用
+  detailLevel?: string; // IMAGE 类型使用
 }
 
 // 工具调用请求类型
