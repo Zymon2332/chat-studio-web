@@ -22,7 +22,7 @@ interface PreviewContextType {
 const PreviewContext = createContext<PreviewContextType>({});
 
 const Code: React.FC<ComponentProps> = (props) => {
-  const { className, children } = props;
+  const { className, children, block } = props;
   const lang = (className?.match(/language-(\w+)/)?.[1] || "").toLowerCase();
   const [copied, setCopied] = React.useState(false);
   const [output, setOutput] = React.useState<string | null>(null);
@@ -30,6 +30,12 @@ const Code: React.FC<ComponentProps> = (props) => {
   const { onPreview } = useContext(PreviewContext);
 
   if (typeof children !== "string") return null;
+
+  // Keep inline code as inline element to avoid unexpected line breaks.
+  if (!block) {
+    return <code className={className}>{children}</code>;
+  }
+
   if (lang === "mermaid") {
     return <Mermaid>{children}</Mermaid>;
   }
