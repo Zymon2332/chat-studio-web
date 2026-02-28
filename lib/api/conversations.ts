@@ -1,4 +1,9 @@
 import request from './request';
+import {
+  XRequest,
+  type AbstractXRequestClass,
+  type SSEOutput,
+} from '@ant-design/x-sdk';
 
 // 创建会话接口返回的 sessionId 类型
 export type SessionId = string;
@@ -84,30 +89,62 @@ export interface ChatRequest {
 // 聊天接口返回类型 - 流式响应
 export type ChatResponse = string;
 
-// 流式聊天接口
-export const chatStream = async (data: ChatRequest, signal?: AbortSignal): Promise<ReadableStreamDefaultReader<Uint8Array>> => {
-  // 使用 fetch API 处理流式响应
-  const baseUrl = '/api';
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
-  
-  const response = await fetch(`${baseUrl}/chat/v1/chat`, {
+export interface ChatStreamCallbacks {
+  onUpdate?: (chunk: SSEOutput) => void;
+  onSuccess?: (chunks: SSEOutput[]) => void;
+  onError?: (error: Error, errorInfo?: any) => void;
+}
+
+export const parseChatStreamChunk = (chunk: SSEOutput): string => {
+  const rawData =
+    typeof chunk?.data === 'string' ? chunk.data.trim() : '';
+  if (!rawData || rawData === '[DONE]') {
+    return '';
+  }
+
+  try {
+    const parsed = JSON.parse(rawData) as { content?: string; text?: string };
+    if (typeof parsed.content === 'string') {
+      return parsed.content;
+    }
+    if (typeof parsed.text === 'string') {
+      return parsed.text;
+    }
+    return '';
+  } catch {
+    return rawData;
+  }
+};
+
+// 基于 x-sdk XRequest 的流式聊天接口
+export const createChatStreamRequest = (
+  data: ChatRequest,
+  callbacks: ChatStreamCallbacks = {}
+): AbstractXRequestClass<ChatRequest, SSEOutput> => {
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
+
+  const requestInstance = XRequest<ChatRequest, SSEOutput>('/api/chat/v1/chat', {
+    manual: true,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Accept-Encoding': 'gzip',
       ...(token ? { 'Auth-Token': token } : {}),
     },
-    body: JSON.stringify(data),
-    signal,
+    callbacks: {
+      onUpdate: (chunk: SSEOutput) => {
+        callbacks.onUpdate?.(chunk);
+      },
+      onSuccess: (chunks: SSEOutput[]) => {
+        callbacks.onSuccess?.(chunks);
+      },
+      onError: (error: Error, errorInfo?: any) => {
+        callbacks.onError?.(error, errorInfo);
+      },
+    },
   });
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  if (!response.body) {
-    throw new Error('Response body is null');
-  }
-
-  return response.body.getReader();
+  requestInstance.run(data);
+  return requestInstance;
 };

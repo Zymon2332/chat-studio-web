@@ -1,16 +1,28 @@
-import { useState, useCallback, useEffect } from "react";
-import { useXChat, MessageInfo } from "@ant-design/x-sdk";
+import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  useXChat,
+  type MessageInfo,
+  type AbstractXRequestClass,
+  type SSEOutput,
+} from "@ant-design/x-sdk";
 import { ChatMessage } from "@/components/chat/ChatMessageList";
 import {
-  chatStream,
   ChatRequest,
   createSession,
+  createChatStreamRequest,
+  parseChatStreamChunk,
+  getSessionMessages,
+  type SessionMessage,
 } from "@/lib/api/conversations";
 import { ModelListItem, DefaultModel } from "@/lib/api/models";
+import {
+  convertSessionMessageToChatMessage,
+  processSessionMessages,
+} from "@/lib/utils/messageConverter";
 
 interface UseChatProps {
   initialSessionId: string | null;
-  onSessionCreated?: (sessionId: string) => void;
+  onSessionCreated?: (sessionId: string) => void | Promise<void>;
 }
 
 export const useChat = ({
@@ -18,24 +30,81 @@ export const useChat = ({
   onSessionCreated,
 }: UseChatProps) => {
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
-  const { messages, setMessages } = useXChat<ChatMessage>({});
+  const { messages, setMessages, setMessage } = useXChat<ChatMessage>({});
+  const requestRef = useRef<AbstractXRequestClass<ChatRequest, SSEOutput> | null>(null);
+  const loadSessionRequestIdRef = useRef(0);
 
   const [sendingLoading, setSendingLoading] = useState<boolean>(false);
-  const [abortController, setAbortController] = useState<AbortController | null>(
-    null
-  );
+  const [sessionMessagesLoading, setSessionMessagesLoading] = useState<boolean>(false);
 
   useEffect(() => {
     setSessionId(initialSessionId);
   }, [initialSessionId]);
 
   const handleCancel = useCallback(() => {
-    if (abortController) {
-      abortController.abort();
-      setAbortController(null);
-    }
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => {
+        if (msg.status === "loading" || msg.status === "updating") {
+          return {
+            ...msg,
+            status: "abort",
+            message: {
+              ...msg.message,
+              isLoading: false,
+              streamCompleted: true,
+            },
+          };
+        }
+        return msg;
+      })
+    );
     setSendingLoading(false);
-  }, [abortController]);
+  }, [setMessages]);
+
+  const cancelSessionMessagesLoading = useCallback(() => {
+    loadSessionRequestIdRef.current += 1;
+    setSessionMessagesLoading(false);
+  }, []);
+
+  const loadMessagesBySession = useCallback(
+    async (targetSessionId: string) => {
+      const currentRequestId = loadSessionRequestIdRef.current + 1;
+      loadSessionRequestIdRef.current = currentRequestId;
+      setSessionMessagesLoading(true);
+      setSessionId(targetSessionId);
+      setMessages([]);
+
+      try {
+        const sessionMessages = await getSessionMessages(targetSessionId);
+        if (loadSessionRequestIdRef.current !== currentRequestId) {
+          return;
+        }
+
+        const processedMessages = processSessionMessages(sessionMessages);
+        const messageInfos = processedMessages.map(
+          (msg: SessionMessage, index: number) => ({
+            id: `${targetSessionId}-${index}`,
+            status: "success" as const,
+            message: convertSessionMessageToChatMessage(msg),
+          })
+        );
+        setMessages(messageInfos);
+      } catch (error) {
+        if (loadSessionRequestIdRef.current !== currentRequestId) {
+          return;
+        }
+        console.error("加载会话消息失败:", error);
+        setMessages([]);
+      } finally {
+        if (loadSessionRequestIdRef.current === currentRequestId) {
+          setSessionMessagesLoading(false);
+        }
+      }
+    },
+    [setMessages]
+  );
 
   const handleSubmit = useCallback(
     async (
@@ -55,7 +124,11 @@ export const useChat = ({
           currentSessionId = await createSession();
           setSessionId(currentSessionId);
           if (onSessionCreated) {
-            onSessionCreated(currentSessionId);
+            try {
+              await onSessionCreated(currentSessionId);
+            } catch (error) {
+              console.warn("会话创建后的回调执行失败:", error);
+            }
           }
         } catch (error) {
           setSendingLoading(false);
@@ -103,94 +176,75 @@ export const useChat = ({
           ...(contentType && { contentType }),
         };
 
-        const controller = new AbortController();
-        setAbortController(controller);
-
-        const reader = await chatStream(requestData, controller.signal);
-
         let fullContent = "";
-        let buffer = "";
-
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
-
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          let chunkContentDelta = "";
-          let hasUpdates = false;
-
-          for (const line of lines) {
-            if (!line.startsWith("data:")) continue;
-            const data = line.slice(5).trim();
-            if (!data || data === "[DONE]") continue;
-
-            try {
-              const jsonData = JSON.parse(data);
-              if (jsonData.content) {
-                chunkContentDelta += jsonData.content;
-                hasUpdates = true;
-              }
-            } catch {
-              chunkContentDelta += data;
-              hasUpdates = true;
+        requestRef.current = createChatStreamRequest(requestData, {
+          onUpdate: (chunk) => {
+            const delta = parseChatStreamChunk(chunk);
+            if (!delta) {
+              return;
             }
-          }
 
-          if (hasUpdates) {
-            fullContent += chunkContentDelta;
-
-            setMessages((prevMessages) => {
-              return prevMessages.map((msg) => {
-                if (msg.id === aiMsgId) {
-                  return {
-                    ...msg,
-                    status: "loading",
-                    message: {
-                      ...msg.message,
-                      content: fullContent,
-                      isLoading: false,
-                      streamCompleted: false,
-                    },
-                  };
-                }
-                return msg;
-              });
-            });
-          }
-        }
-
-        setMessages((prevMessages) => {
-          return prevMessages.map((msg) => {
-            if (msg.id === aiMsgId) {
-              return {
-                ...msg,
-                status: "success",
-                message: {
-                  ...msg.message,
-                  isLoading: false,
-                  streamCompleted: true,
-                  content: fullContent,
-                },
-              };
+            fullContent += delta;
+            setMessage(aiMsgId, (msg) => ({
+              ...msg,
+              status: "updating",
+              message: {
+                ...msg.message,
+                content: fullContent,
+                isLoading: false,
+                streamCompleted: false,
+              },
+            }));
+          },
+          onSuccess: (chunks) => {
+            if (!fullContent && chunks.length > 0) {
+              fullContent = chunks.map(parseChatStreamChunk).join("");
             }
-            return msg;
-          });
+
+            setMessage(aiMsgId, (msg) => ({
+              ...msg,
+              status: "success",
+              message: {
+                ...msg.message,
+                isLoading: false,
+                streamCompleted: true,
+                content: fullContent,
+              },
+            }));
+            requestRef.current = null;
+            setSendingLoading(false);
+          },
+          onError: (error) => {
+            const status = error.name === "AbortError" ? "abort" : "error";
+            setMessage(aiMsgId, (msg) => ({
+              ...msg,
+              status,
+              message: {
+                ...msg.message,
+                isLoading: false,
+                streamCompleted: true,
+                content: fullContent,
+              },
+            }));
+            requestRef.current = null;
+            setSendingLoading(false);
+          },
         });
-      } finally {
+      } catch {
+        setMessage(aiMsgId, (msg) => ({
+          ...msg,
+          status: "error",
+          message: {
+            ...msg.message,
+            isLoading: false,
+            streamCompleted: true,
+          },
+        }));
+        requestRef.current = null;
         setSendingLoading(false);
-        setAbortController(null);
       }
     },
-    [sessionId, onSessionCreated, setMessages]
+    [onSessionCreated, sessionId, setMessage, setMessages]
   );
 
   return {
@@ -198,6 +252,9 @@ export const useChat = ({
     setMessages,
     sessionId,
     setSessionId,
+    sessionMessagesLoading,
+    loadMessagesBySession,
+    cancelSessionMessagesLoading,
     sendingLoading,
     handleSubmit,
     handleCancel,

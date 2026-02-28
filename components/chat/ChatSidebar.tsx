@@ -14,7 +14,7 @@ import {
   CodeOutlined,
 } from "@ant-design/icons";
 import { Conversations, ConversationsProps } from "@ant-design/x";
-import { SessionItem, deleteSession, updateSessionTitle } from "@/lib/api/conversations";
+import { type ConversationViewModel } from "@/lib/chat/useConversationStore";
 import { useUser } from "@/contexts/UserContext";
 
 // 时间分组函数
@@ -62,13 +62,13 @@ export interface ConversationItem {
 export interface ChatSidebarProps {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
-  sessions: SessionItem[];
+  sessions: ConversationViewModel[];
   selectedId: string;
   onAddConversation: () => void;
   onSettingsClick: () => void;
   onConversationSelect: (key: string) => void;
-  onSessionsChange?: () => void;
-  onSelectedSessionDeleted?: () => void;
+  onRenameConversation: (key: string, title: string) => Promise<void>;
+  onDeleteConversation: (keys: string[]) => Promise<void>;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -79,8 +79,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onAddConversation,
   onSettingsClick,
   onConversationSelect,
-  onSessionsChange,
-  onSelectedSessionDeleted,
+  onRenameConversation,
+  onDeleteConversation,
 }) => {
   const { token } = theme.useToken();
   const { userInfo } = useUser();
@@ -93,12 +93,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   // 保存编辑
   const handleSaveEdit = useCallback(async () => {
     if (editingKey && editingValue.trim()) {
-      await updateSessionTitle(editingKey, editingValue.trim());
-        onSessionsChange?.();
+      await onRenameConversation(editingKey, editingValue.trim());
     }
     setEditingKey(null);
     setEditingValue("");
-  }, [editingKey, editingValue, onSessionsChange]);
+  }, [editingKey, editingValue, onRenameConversation]);
 
   // 开始编辑
   const handleStartEdit = useCallback((key: string, currentLabel: string) => {
@@ -124,9 +123,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   // 构建 Conversations 的 items，包含固定功能项
   const conversationsItems = useMemo(() => {
     const sessionItems = sessions.map((session) => {
-      const isEditing = editingKey === session.sessionId;
+      const sessionKey = session.key;
+      const isEditing = editingKey === sessionKey;
       return {
-        key: session.sessionId,
+        key: sessionKey,
         label: isEditing ? (
           <Input
             ref={inputRef}
@@ -145,8 +145,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               borderRadius: '4px',
             }}
           />
-        ) : session.sessionTitle,
-        group: getTimeGroup(session.updatedAt),
+        ) : (session.sessionTitle || "未命名会话"),
+        group: getTimeGroup(session.updatedAt || 0),
       };
     });
 
@@ -179,13 +179,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       width: 400,
       onOk: async () => {
         try {
-          await deleteSession(key);
-          onSessionsChange?.();
-          
-          if (selectedId === key) {
-            onSelectedSessionDeleted?.();
-          }
-
+          await onDeleteConversation([key]);
           antdMessage.success("会话已删除");
         } catch (error) {
           console.error("删除会话失败:", error);
@@ -196,7 +190,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         }
       },
     });
-  }, [selectedId, onSessionsChange, onSelectedSessionDeleted]);
+  }, [onDeleteConversation]);
 
   // 为Conversations组件创建菜单项
   const conversationMenu: ConversationsProps["menu"] = useCallback((item: any) => {

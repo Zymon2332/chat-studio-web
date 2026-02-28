@@ -22,3 +22,19 @@
   flex-direction: column;
   height: 100%;
 }
+
+.sessionLoadingState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+}
+
+.chatSkeleton {
+  width: 100%;
+  max-width: 920px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

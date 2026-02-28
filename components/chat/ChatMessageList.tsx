@@ -1,5 +1,6 @@
 import { theme } from 'antd';
 import React, { useMemo } from 'react';
+import type { MessageInfo } from '@ant-design/x-sdk';
 
 import { Bubble } from '@ant-design/x';
 
@@ -27,7 +28,7 @@ export interface ChatMessage {
 
 // 组件属性接口
 export interface ChatMessageListProps {
-  messages: ChatMessage[];
+  messages: MessageInfo<ChatMessage>[];
   onPreview?: (content: string) => void;
 }
 
@@ -47,16 +48,25 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
   // 使用 useMemo 缓存 bubble items 配置
   const bubbleItems = useMemo(() => {
-    return messages.map((msg, index) => {
+    return messages.map((messageInfo, index) => {
+      const msg = messageInfo.message;
       const variant: "shadow" | "borderless" =
         msg.role === "user" ? "shadow" : "borderless";
+      const isAssistantLoading =
+        msg.role === "assistant" &&
+        messageInfo.status === "loading" &&
+        !msg.content;
+      const isAssistantStreaming =
+        msg.role === "assistant" &&
+        (messageInfo.status === "loading" || messageInfo.status === "updating");
+
       return {
-        key: generateMessageKey(msg, index),
+        key: messageInfo.id ?? generateMessageKey(msg, index),
         className: styles.bubbleItem,
         content: msg,
         role: msg.role,
-        loading: msg.isLoading,
-        streaming: msg.role === "assistant",
+        loading: isAssistantLoading || msg.isLoading,
+        streaming: isAssistantStreaming,
         variant,
         styles: {
           content: {
