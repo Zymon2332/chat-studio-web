@@ -20,8 +20,6 @@ export const convertSessionMessageToChatMessage = (
   const chatMessage: ChatMessage = {
     content,
     role,
-    avatar: role === 'user' ? '👤' : '🤖',
-    streamCompleted: role === 'assistant',
     thinking: sessionMessage.thinking,
     toolRequests: sessionMessage.toolRequests,
     toolResponses: sessionMessage.toolResponses,
@@ -38,15 +36,4 @@ export const convertSessionMessageToChatMessage = (
   }
 
   return chatMessage;
-};
-
-/**
- * 处理会话消息列表
- * 简化版本：只需按 parentId 排序即可，工具调用结果已包含在 AI 消息中
- */
-export const processSessionMessages = (
-  sessionMessages: SessionMessage[]
-): SessionMessage[] => {
-  // 按 parentId 排序消息
-  return sessionMessages.sort((a, b) => (a.parentId || 0) - (b.parentId || 0));
 };

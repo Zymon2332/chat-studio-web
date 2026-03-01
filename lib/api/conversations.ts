@@ -46,7 +46,6 @@ export interface SessionMessage {
   thinking?: string; // AI 消息的思考过程
   toolRequests?: ToolRequest[]; // AI 消息的工具调用请求
   toolResponses?: ToolResponse[]; // AI 消息的工具调用结果（与 toolRequests id 对应）
-  parentId?: number; // 保留用于排序
   dateTime?: string; // 消息时间
 }
 

@@ -17,7 +17,6 @@ import {
 import { ModelListItem, DefaultModel } from "@/lib/api/models";
 import {
   convertSessionMessageToChatMessage,
-  processSessionMessages,
 } from "@/lib/utils/messageConverter";
 
 interface UseChatProps {
@@ -82,8 +81,7 @@ export const useChat = ({
           return;
         }
 
-        const processedMessages = processSessionMessages(sessionMessages);
-        const messageInfos = processedMessages.map(
+        const messageInfos = sessionMessages.map(
           (msg: SessionMessage, index: number) => ({
             id: `${targetSessionId}-${index}`,
             status: "success" as const,
@@ -144,7 +142,6 @@ export const useChat = ({
         message: {
           content: message,
           role: "user",
-          avatar: "👤",
           fileUrl: fileUrl,
           contentType: contentType as any,
         },
@@ -156,7 +153,6 @@ export const useChat = ({
         message: {
           content: "",
           role: "assistant",
-          avatar: "🤖",
           isLoading: true,
           streamCompleted: false,
         },

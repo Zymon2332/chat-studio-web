@@ -15,7 +15,6 @@ import type { ToolRequest, ToolResponse } from "@/lib/api/conversations";
 export interface ChatMessage {
   content: string;
   role: "user" | "assistant";
-  avatar?: string;
   isLoading?: boolean;
   streamCompleted?: boolean;
   thinking?: string; // 深度思考内容

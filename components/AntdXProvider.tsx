@@ -18,23 +18,14 @@ export const AntdXProvider = ({ children }: { children: React.ReactNode }) => {
       theme={{
         cssVar: { key: 'ant' },
         token: {
-          borderRadius: 6,
         },
         algorithm: antTheme.defaultAlgorithm,
         components: {
           Conversations: {
-            creationBgColor: "rgba(63, 81, 181, 0.05)",
-            creationBorderColor: "rgba(63, 81, 181, 0.15)",
-            creationHoverColor: "rgba(63, 81, 181, 0.12)",
-            shortcutKeyTextColor: "rgba(63, 81, 181, 0.65)",
           },
           Sender: {
-            colorBgSlot: "rgba(63, 81, 181, 0.05)",
-            colorBorderSlot: "rgba(63, 81, 181, 0.15)",
-            colorBorderInput: "rgba(63, 81, 181, 0.15)",
           },
           Think: {
-            colorTextBlink: "#3F51B5",
           },
         },
       }}
