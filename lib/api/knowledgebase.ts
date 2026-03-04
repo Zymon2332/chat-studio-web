@@ -1,20 +1,19 @@
 import request from './request';
 
 // 知识库数据类型定义
+export interface KnowledgeBaseTag {
+  id: number;
+  name: string;
+}
+
 export interface KnowledgeBase {
   id: number;
   name: string;
-  description: string;
+  description: string | null;
   createdTime: string;
   updatedTime: string;
   docCount: number;
-  tags: Array<{ id: number; name: string }>;
-  retrievalMode?: string;
-  topK?: number;
-  rerankEnabled?: boolean;
-  embedMinScore?: number;
-  topN?: number;
-  rerankMinScore?: number;
+  tags: KnowledgeBaseTag[];
 }
 
 // 分页响应类型
@@ -23,14 +22,6 @@ export interface PageResponse<T> {
   current: number;
   size: number;
   total: number;
-}
-
-// API响应类型
-export interface ApiResponse<T> {
-  code: string;
-  msg: string;
-  success: boolean;
-  data: T;
 }
 
 // 分页参数
@@ -49,14 +40,22 @@ export interface TagItem {
 export interface CreateKnowledgeBaseParams {
   name: string;
   description?: string;
-  retrievalMode: string;
-  topK: number;
-  rerankEnabled: boolean;
-  embedMinScore: number;
-  topN?: number;
-  rerankMinScore?: number;
   tags?: Array<{ id?: number; name: string }>;
+  type: 'DOCUMENT' | 'VIDEO' | 'IMAGE';
+  responseType?: 'BASIC' | 'MULTIMODAL';
+  config: {
+    retrievalMode: 'EMBEDDING' | 'HYBRID' | 'FULL_TEXT';
+    topK: number;
+    embedMinScore: number;
+    fusionStrategy: 'RRF' | 'WEIGHT' | 'RERANK';
+    topN?: number;
+    rerankMinScore?: number;
+    denseWeight?: number;
+    sparseWeight?: number;
+  };
 }
+
+export type UpdateKnowledgeBaseParams = Omit<CreateKnowledgeBaseParams, 'type'>;
 
 // 获取知识库分页数据
 export const getKnowledgeBasePage = async (params: PageParams): Promise<PageResponse<KnowledgeBase>> => {
@@ -89,6 +88,6 @@ export const createKnowledgeBase = async (data: CreateKnowledgeBaseParams): Prom
 };
 
 // 更新知识库
-export const updateKnowledgeBase = async (id: number, data: CreateKnowledgeBaseParams): Promise<KnowledgeBase> => {
+export const updateKnowledgeBase = async (id: number, data: UpdateKnowledgeBaseParams): Promise<KnowledgeBase> => {
   return await request.put('/kb/update', { ...data, id });
 };

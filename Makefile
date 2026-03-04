@@ -1,6 +1,6 @@
 DOCKER_REGISTRY=deepcode
 SERVER_IMAGE=$(DOCKER_REGISTRY)/chat-studio-web
-VERSION=0.6.4
+VERSION=preview
 
 build-x-web:
 	@echo "Building Web Docker image: $(SERVER_IMAGE)\:$(VERSION)"
