@@ -144,7 +144,7 @@ const ModelSelectButton: React.FC<ModelSelectButtonProps> = ({
 
   return (
     <Dropdown
-      menu={{ items: menuItems }}
+      menu={{ items: menuItems, className: styles.dropdownMenu }}
       trigger={["click"]}
       placement="topLeft"
       onOpenChange={(open) => {
@@ -154,8 +154,8 @@ const ModelSelectButton: React.FC<ModelSelectButtonProps> = ({
         }
       }}
       dropdownRender={(menu) => (
-        <div style={{ backgroundColor: "#fff", borderRadius: 12 }}>
-          <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+        <div className={styles.dropdownPanel}>
+          <div className={styles.dropdownSearch}>
             <Input
               placeholder="搜索模型..."
               value={searchValue}
@@ -167,7 +167,7 @@ const ModelSelectButton: React.FC<ModelSelectButtonProps> = ({
               onKeyDown={(e) => e.stopPropagation()}
             />
           </div>
-          {menu}
+          <div className={styles.dropdownMenuContainer}>{menu}</div>
         </div>
       )}
     >

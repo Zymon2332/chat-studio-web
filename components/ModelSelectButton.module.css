@@ -75,6 +75,28 @@
   padding: 6px 10px !important;
 }
 
+.dropdownPanel {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dropdownSearch {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dropdownMenuContainer {
+  max-height: min(360px, calc(100vh - 220px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dropdownMenu {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
 .menuItemLabel {
   display: flex;
   align-items: center;
